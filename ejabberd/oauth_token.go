@@ -41,24 +41,6 @@ func GetToken(endpoint, sjid, password, scope, clientID string) (string, error) 
 	return t.accessToken, nil
 }
 
-// JoinURL checks that Base URL is a valid URL and joins base URL with
-// the method suffix string.
-func JoinURL(baseURL string, suffix string) (string, error) {
-	var u *url.URL
-	var err error
-
-	if u, err = url.Parse(baseURL); err != nil {
-		return "", fmt.Errorf("invalid url: %s", baseURL)
-	}
-
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return "", fmt.Errorf("invalid url scheme: %s", u.Scheme)
-	}
-
-	u.Path = path.Join(u.Path, suffix)
-	return u.String(), nil
-}
-
 func httpGetToken(j jid, password, clientID, scope, apiURL string) (oauthToken, error) {
 	params := params(j, password, clientID, scope)
 
@@ -115,6 +97,34 @@ func params(j jid, password, clientID, scope string) url.Values {
 		"server":        {j.domain},
 		"password":      {password},
 	}
+}
+
+// =============================================================================
+
+// Helpers for command-line tool
+
+// JoinURL checks that Base URL is a valid URL and joins base URL with
+// the method suffix string.
+func JoinURL(baseURL string, suffix string) (string, error) {
+	var u *url.URL
+	var err error
+
+	if u, err = url.Parse(baseURL); err != nil {
+		return "", fmt.Errorf("invalid url: %s", baseURL)
+	}
+
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return "", fmt.Errorf("invalid url scheme: %s", u.Scheme)
+	}
+
+	u.Path = path.Join(u.Path, suffix)
+	return u.String(), nil
+}
+
+// PrepareScope ensures we return scopes as space separated. However,
+// we accept comma separated scopes as input as well for convenience.
+func PrepareScope(s string) string {
+	return strings.Replace(s, ",", " ", -1)
 }
 
 // =============================================================================
