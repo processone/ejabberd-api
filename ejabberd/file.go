@@ -8,6 +8,7 @@ import (
 // OAuthFile defines ejabberd OAuth file structure.
 type OAuthFile struct {
 	AccessToken string
+	JID         string // This is a reminder of who the token is associated with
 }
 
 // Save write ejabberd OAuth structure to file.

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/processone/go/ejabberd"
@@ -47,7 +48,9 @@ func getToken() {
 
 	var f ejabberd.OAuthFile
 	f.AccessToken = token
+	f.JID = *tokenJID
 	if err = f.Save(*file); err != nil {
 		kingpin.Fatalf("could not save token to file %q: %s", *file, err)
 	}
+	fmt.Println("Successfully saved token in file", *file)
 }
