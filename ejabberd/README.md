@@ -1,4 +1,4 @@
-# ejabberd API command-line
+# ejabberd API command-line tool
 
 ejabberd command-line tool allow interacting ejabberd with ejabberd
 ReST API. It relies on OAuth tokens and scope to define the command
@@ -15,7 +15,7 @@ If you have go installed in your environment you can install
 go get -u github.com/processone/go/ejabberd
 ```
 
-## Generating Bash/ZSH completion
+### Generating Bash/ZSH completion
 
 You can generate Bash completion with following command:
 
@@ -39,3 +39,7 @@ eval "$(ejabberd --completion-script-bash)"
 ```bash
 eval "$(ejabberd --completion-script-zsh)"
 ```
+
+## Commands
+
+* token: Get OAuth token. This is needed before calling others commands.
