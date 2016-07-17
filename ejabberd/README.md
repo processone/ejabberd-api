@@ -36,6 +36,8 @@ To be able to use completion for Bash, you can type or add in your
 eval "$(ejabberd --completion-script-bash)"
 ```
 
+For ZSH, you can use:
+
 ```bash
 eval "$(ejabberd --completion-script-zsh)"
 ```
