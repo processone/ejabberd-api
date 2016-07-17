@@ -35,7 +35,7 @@ func GetToken(endpoint, sjid, password, scope, clientID string) (string, error) 
 	}
 
 	if t.error != "" {
-		return "", fmt.Errorf("error retrieving token: %s", t.error)
+		return "", fmt.Errorf(t.error)
 	}
 
 	return t.accessToken, nil
