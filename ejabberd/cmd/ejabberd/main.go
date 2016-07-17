@@ -9,9 +9,8 @@ import (
 )
 
 var (
-	app      = kingpin.New("ejabberd", "A command-line front-end for ejabberd server API.").Version("0.0.1").Author("ProcessOne")
-	endpoint = app.Flag("endpoint", "ejabberd API endpoint.").Short('e').Default("http://localhost:5281/").String()
-	file     = app.Flag("file", "OAuth token JSON file.").Short('f').Default(".ejabberd-oauth.json").String()
+	app  = kingpin.New("ejabberd", "A command-line front-end for ejabberd server API.").Version("0.0.1").Author("ProcessOne")
+	file = app.Flag("file", "OAuth token JSON file.").Short('f').Default(".ejabberd-oauth.json").String()
 
 	// ========= token =========
 	token         = app.Command("token", "Request an OAuth token.")
@@ -19,7 +18,8 @@ var (
 	tokenPassword = token.Flag("password", "Password to use to retrieve user token.").Short('p').String()
 	tokenAskPass  = token.Flag("prompt", "Prompt for password.").Short('P').Bool()
 	tokenScope    = token.Flag("scope", "Comma separated list of scope to associate to token").Short('s').Default("sasl_auth").String()
-	tokenClient   = token.Flag("client", "Name of application that will use the token.").Default("go-ejabberd").String()
+	tokenClient   = token.Flag("client", "Name of the application that will use the token.").Default("go-ejabberd").String()
+	tokenEndpoint = token.Flag("endpoint", "ejabberd API endpoint.").Short('e').Default("http://localhost:5281/").String()
 	tokenOauthURL = token.Flag("oauth-url", "Oauth suffix for oauth endpoint.").Default("/oauth/").String()
 )
 
@@ -39,7 +39,7 @@ func getToken() {
 	var token string
 	var url string
 	var err error
-	if url, err = ejabberd.JoinURL(*endpoint, *tokenOauthURL); err != nil {
+	if url, err = ejabberd.JoinURL(*tokenEndpoint, *tokenOauthURL); err != nil {
 		kingpin.Fatalf("invalid endpoint URL: %s", err)
 	}
 	scope := ejabberd.PrepareScope(*tokenScope)
@@ -51,6 +51,7 @@ func getToken() {
 	f.AccessToken = token
 	f.JID = *tokenJID
 	f.Scope = scope
+	f.Endpoint = *tokenEndpoint
 	if err = f.Save(*file); err != nil {
 		kingpin.Fatalf("could not save token to file %q: %s", *file, err)
 	}

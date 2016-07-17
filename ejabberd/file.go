@@ -9,8 +9,9 @@ import (
 type OAuthFile struct {
 	AccessToken string
 	// Reminder of parameters associated with the token
-	JID   string
-	Scope string
+	JID      string
+	Scope    string
+	Endpoint string
 }
 
 // Save write ejabberd OAuth structure to file.
