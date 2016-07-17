@@ -70,13 +70,15 @@ func httpGetToken(j jid, password, clientID, scope, apiURL string) (oauthToken, 
 	}
 
 	resp, err := client.PostForm(apiURL, params)
+	var t oauthToken
+	if err != nil {
+		return t, err
+	}
 	defer resp.Body.Close()
 
 	// We expect a redirect on success: Check error for redirect:
 	if urlError, ok := err.(*url.Error); ok && urlError.Err == errRedirectAttempt && resp.StatusCode == 302 {
 		redirectURL := resp.Header.Get("Location")
-
-		var t oauthToken
 
 		u, err := url.Parse(redirectURL)
 		if err != nil {
@@ -85,7 +87,7 @@ func httpGetToken(j jid, password, clientID, scope, apiURL string) (oauthToken, 
 
 		result := url.Values{}
 		if result, err = url.ParseQuery(u.RawQuery); err != nil {
-			return oauthToken{}, err
+			return t, err
 		}
 
 		if len(result["access_token"]) > 0 {
@@ -99,7 +101,7 @@ func httpGetToken(j jid, password, clientID, scope, apiURL string) (oauthToken, 
 		return t, nil
 	}
 	// TODO handle other errors with more details
-	return oauthToken{}, errors.New("could not retrieve token")
+	return t, errors.New("could not retrieve token")
 }
 
 func params(j jid, password, clientID, scope string) url.Values {
