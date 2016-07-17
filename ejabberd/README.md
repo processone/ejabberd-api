@@ -44,4 +44,4 @@ eval "$(ejabberd --completion-script-zsh)"
 
 ## Commands
 
-* token: Get OAuth token. This is needed before calling others commands.
+* **token**: Get OAuth token. This is needed before calling others commands.
