@@ -12,7 +12,7 @@ If you have go installed in your environment you can install
 `ejabberd` command-line tool with:
 
 ```bash
-go get -u github.com/processone/go/ejabberd
+go get -u github.com/processone/go/ejabberd/cmd/ejabberd
 ```
 
 ## Generating Bash/ZSH completion
