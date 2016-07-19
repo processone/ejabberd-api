@@ -83,7 +83,12 @@ func httpGetToken(j jid, password, clientID, scope, apiURL string) (oauthToken, 
 		return t, fmt.Errorf("could not retrieve token: %s", err)
 	}
 	resp.Body.Close()
-	return t, errors.New("could not retrieve token")
+
+	if resp.StatusCode == 404 {
+		return t, errors.New("oauth endpoint not found (404)")
+	}
+
+	return t, errors.New("unexpected reply from oauth endpoint")
 }
 
 func params(j jid, password, clientID, scope string) url.Values {
