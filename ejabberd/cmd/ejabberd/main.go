@@ -23,15 +23,37 @@ var (
 	tokenTTL      = token.Flag("ttl", "Time before token expiration. Valid unit time are second (s), minutes (m), hours (h)").Default("8760h").Short('t').Duration()
 	tokenEndpoint = token.Flag("endpoint", "ejabberd API endpoint.").Short('e').Default("http://localhost:5281/").String()
 	tokenOauthURL = token.Flag("oauth-url", "Oauth suffix for oauth endpoint.").Default("/oauth/").String()
+
+	stats = app.Command("stats", "Get ejabberd statistics.")
 )
 
 func main() {
 	kingpin.CommandLine.HelpFlag.Short('h') // BUG(mr) Short help flag does not seem to work.
 	kingpin.CommandLine.Help = "A command-line front-end for ejabberd server API."
 
-	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
+	command := kingpin.MustParse(app.Parse(os.Args[1:]))
+	switch command {
 	case token.FullCommand():
 		getToken()
+	default:
+		execute(command)
+	}
+}
+
+func execute(command string) {
+	f, err := ejabberd.ReadOAuthFile(*file)
+	if err != nil {
+		kingpin.Fatalf("could not load token file %q: %s", *file, err)
+	}
+
+	c := ejabberd.Client{
+		URL:   f.Endpoint + "api/",
+		Token: f.AccessToken,
+	}
+
+	switch command {
+	case stats.FullCommand():
+		statsCommand(c)
 	}
 }
 
@@ -55,9 +77,23 @@ func getToken() {
 	f.JID = *tokenJID
 	f.Scope = scope
 	f.Expiration = expiration
-	f.Endpoint = *tokenEndpoint // BUG(mr) for now, ejabberd returns epoch instead of duration
+	f.Endpoint = *tokenEndpoint
 	if err = f.Save(*file); err != nil {
 		kingpin.Fatalf("could not save token to file %q: %s", *file, err)
 	}
 	fmt.Println("Successfully saved token in file", *file)
+}
+
+// =============================================================================
+
+func statsCommand(c ejabberd.Client) {
+	command := ejabberd.GetStats{
+		Name: "registeredusers",
+	}
+
+	resp, err := c.Call(&command)
+	if err != nil {
+		kingpin.Fatalf("command error %q: %s", command.Name, err)
+	}
+	fmt.Println(string(resp))
 }
