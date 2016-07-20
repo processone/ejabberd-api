@@ -7,4 +7,5 @@ ejabberd command-line:
 - Add option for controling token expiration / duration.
 - Refactor code to streamline the workflow / avoid duplication of processing between structure oauthToken and file.
   Oauthtoken should be probably serializable as is.
-
+- Verbose mode to help debug request.
+- Option to print value as text or JSon.
