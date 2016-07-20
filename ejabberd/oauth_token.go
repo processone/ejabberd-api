@@ -74,8 +74,6 @@ func httpGetToken(j jid, password, clientID, scope, ttl, apiURL string) (oauthTo
 			return t, err
 		}
 
-		fmt.Println("MREMOND query:", u.RawQuery)
-
 		result := url.Values{}
 		if result, err = url.ParseQuery(u.RawQuery); err != nil {
 			return t, err
