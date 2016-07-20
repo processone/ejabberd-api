@@ -24,7 +24,8 @@ var (
 	tokenEndpoint = token.Flag("endpoint", "ejabberd API endpoint.").Short('e').Default("http://localhost:5281/").String()
 	tokenOauthURL = token.Flag("oauth-url", "Oauth suffix for oauth endpoint.").Default("/oauth/").String()
 
-	stats = app.Command("stats", "Get ejabberd statistics.")
+	stats     = app.Command("stats", "Get ejabberd statistics.")
+	statsName = stats.Arg("name", "Name of stats to query.").Required().Enum("registeredusers", "onlineusers", "onlineusersnode", "uptimeseconds", "processes")
 )
 
 func main() {
@@ -88,12 +89,12 @@ func getToken() {
 
 func statsCommand(c ejabberd.Client) {
 	command := ejabberd.GetStats{
-		Name: "registeredusers",
+		Name: *statsName,
 	}
 
 	resp, err := c.Call(&command)
 	if err != nil {
-		kingpin.Fatalf("command error %q: %s", command.Name, err)
+		kingpin.Fatalf("stats command error %q: %s", command.Name, err)
 	}
 	fmt.Println(string(resp))
 }

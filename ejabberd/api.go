@@ -60,8 +60,17 @@ type GetStats struct {
 	Name string `json:"name"`
 }
 
+func (g *GetStats) knownStats() []string {
+	return []string{"registeredusers", "onlineusers", "onlineusersnode",
+		"uptimeseconds", "processes"}
+}
+
 func (g *GetStats) params() (HTTPParams, error) {
 	var query url.Values
+	if !stringInSlice(g.Name, g.knownStats()) {
+		return HTTPParams{}, fmt.Errorf("unknow statistic: %s", g.Name)
+	}
+
 	body, err := json.Marshal(g)
 	if err != nil {
 		return HTTPParams{}, err
@@ -75,4 +84,13 @@ func (g *GetStats) params() (HTTPParams, error) {
 		query:   query,
 		body:    body,
 	}, nil
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
