@@ -6,43 +6,54 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type oauthToken struct {
 	accessToken string
+	expiration  time.Time
 	error       string
 }
 
 // GetToken calls ejabberd API to get a for a given scope, given valid jid and password.
 // We also assume that the user has the right to generate a token.
-func GetToken(endpoint, sjid, password, scope, clientID string) (string, error) {
+func GetToken(endpoint, sjid, password, scope, clientID string, duration time.Duration) (string, time.Time, error) {
 	var j jid
+	var t oauthToken
 	var err error
 
 	if j, err = parseJID(sjid); err != nil {
-		return "", err
+		return t.accessToken, t.expiration, err
 	}
 
 	var u string
 	if u, err = JoinURL(endpoint, "authorization_token"); err != nil {
-		return "", err
+		return t.accessToken, t.expiration, err
 	}
 
-	var t oauthToken
-	if t, err = httpGetToken(j, password, clientID, scope, u); err != nil {
-		return "", err
+	ttl := int(duration.Seconds())
+
+	now := time.Now()
+
+	if t, err = httpGetToken(j, password, clientID, scope, strconv.Itoa(ttl), u); err != nil {
+		return t.accessToken, t.expiration, err
+	}
+
+	if t.expiration.IsZero() {
+		t.expiration = now.Add(duration)
 	}
 
 	if t.error != "" {
-		return "", fmt.Errorf(t.error)
+		return t.accessToken, t.expiration, fmt.Errorf(t.error)
 	}
 
-	return t.accessToken, nil
+	return t.accessToken, t.expiration, nil
 }
 
-func httpGetToken(j jid, password, clientID, scope, apiURL string) (oauthToken, error) {
-	params := params(j, password, clientID, scope)
+func httpGetToken(j jid, password, clientID, scope, ttl, apiURL string) (oauthToken, error) {
+	params := params(j, password, clientID, scope, ttl)
 
 	var errRedirectAttempt = errors.New("redirect")
 	client := &http.Client{
@@ -63,6 +74,8 @@ func httpGetToken(j jid, password, clientID, scope, apiURL string) (oauthToken, 
 			return t, err
 		}
 
+		fmt.Println("MREMOND query:", u.RawQuery)
+
 		result := url.Values{}
 		if result, err = url.ParseQuery(u.RawQuery); err != nil {
 			return t, err
@@ -75,6 +88,16 @@ func httpGetToken(j jid, password, clientID, scope, apiURL string) (oauthToken, 
 		if len(result["error"]) > 0 {
 			t.error = result["error"][0]
 		}
+
+		if len(result["expires_in"]) > 0 {
+			expiresIn := result["expires_in"][0]
+			var i int64
+			if i, err = strconv.ParseInt(expiresIn, 10, 32); err != nil {
+				return t, err
+			}
+			t.expiration = time.Now().Add(time.Duration(i) * time.Second)
+		}
+
 		resp.Body.Close()
 		return t, nil
 	}
@@ -91,7 +114,7 @@ func httpGetToken(j jid, password, clientID, scope, apiURL string) (oauthToken, 
 	return t, errors.New("unexpected reply from oauth endpoint")
 }
 
-func params(j jid, password, clientID, scope string) url.Values {
+func params(j jid, password, clientID, scope, ttl string) url.Values {
 	return url.Values{
 		"response_type": {"token"},
 		"state":         {""},
@@ -101,6 +124,7 @@ func params(j jid, password, clientID, scope string) url.Values {
 		"username":      {j.username},
 		"server":        {j.domain},
 		"password":      {password},
+		"ttl":           {ttl},
 	}
 }
 

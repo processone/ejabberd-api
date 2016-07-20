@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/processone/go/ejabberd"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -19,6 +20,7 @@ var (
 	tokenAskPass  = token.Flag("prompt", "Prompt for password.").Short('P').Bool()
 	tokenScope    = token.Flag("scope", "Comma separated list of scope to associate to token").Short('s').Default("sasl_auth").String()
 	tokenClient   = token.Flag("client", "Name of the application that will use the token.").Default("go-ejabberd").String()
+	tokenTTL      = token.Flag("ttl", "Time before token expiration. Valid unit time are second (s), minutes (m), hours (h)").Default("8760h").Short('t').Duration()
 	tokenEndpoint = token.Flag("endpoint", "ejabberd API endpoint.").Short('e').Default("http://localhost:5281/").String()
 	tokenOauthURL = token.Flag("oauth-url", "Oauth suffix for oauth endpoint.").Default("/oauth/").String()
 )
@@ -37,13 +39,14 @@ func main() {
 
 func getToken() {
 	var token string
+	var expiration time.Time
 	var url string
 	var err error
 	if url, err = ejabberd.JoinURL(*tokenEndpoint, *tokenOauthURL); err != nil {
 		kingpin.Fatalf("invalid endpoint URL: %s", err)
 	}
 	scope := ejabberd.PrepareScope(*tokenScope)
-	if token, err = ejabberd.GetToken(url, *tokenJID, *tokenPassword, scope, *tokenClient); err != nil {
+	if token, expiration, err = ejabberd.GetToken(url, *tokenJID, *tokenPassword, scope, *tokenClient, *tokenTTL); err != nil {
 		kingpin.Fatalf("could not retrieve token: %s", err)
 	}
 
@@ -51,7 +54,8 @@ func getToken() {
 	f.AccessToken = token
 	f.JID = *tokenJID
 	f.Scope = scope
-	f.Endpoint = *tokenEndpoint
+	f.Expiration = expiration
+	f.Endpoint = *tokenEndpoint // BUG(mr) for now, ejabberd returns epoch instead of duration
 	if err = f.Save(*file); err != nil {
 		kingpin.Fatalf("could not save token to file %q: %s", *file, err)
 	}
