@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/processone/go/ejabberd"
+	"github.com/processone/ejabberd-api"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
