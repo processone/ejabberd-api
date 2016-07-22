@@ -1,5 +1,7 @@
 # ejabberd API library and command-line tool
 
+[![Build Status](https://travis-ci.org/processone/ejabberd-api.svg?branch=master)](https://travis-ci.org/processone/ejabberd-api) [![Coverage Status](https://coveralls.io/repos/processone/ejabberd-api/badge.svg?branch=master&service=github)](https://coveralls.io/github/processone/ejabberd-api?branch=master)
+
 This tool is composed of two components:
 
 - A command-line tool to interact with ejabberd through ReST API calls
