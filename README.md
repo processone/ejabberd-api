@@ -1,6 +1,7 @@
 # ejabberd API library and command-line tool
 
-[![Build Status](https://semaphoreci.com/api/v1/processone/ejabberd-api/branches/master/shields_badge.svg)](https://semaphoreci.com/processone/ejabberd-api) [![Coverage Status](https://coveralls.io/repos/processone/ejabberd-api/badge.svg?branch=master&service=github)](https://coveralls.io/github/processone/ejabberd-api?branch=master)
+[![Build Status](https://semaphoreci.com/api/v1/processone/ejabberd-api/branches/master/shields_badge.svg)](https://semaphoreci.com/processone/ejabberd-api)
+[![Coverage Status](https://coveralls.io/repos/github/processone/ejabberd-api/badge.svg?branch=master)](https://coveralls.io/github/processone/ejabberd-api?branch=master)
 
 This tool is composed of two components:
 
