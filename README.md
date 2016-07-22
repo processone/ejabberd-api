@@ -1,16 +1,34 @@
-# ejabberd API command-line tool
+# ejabberd API library and command-line tool
 
-ejabberd command-line tool allow interacting ejabberd with ejabberd
-ReST API. It relies on OAuth tokens and scope to define the command
-the user will be allowed to call.
+This tool is composed of two components:
 
-## Configure ejabberd OAuth API
+- A command-line tool to interact with ejabberd through ReST API calls
+  from the command-line, from any server type or desktop (Linux, OSX,
+  Windows).
+- An implementation of ejabberd API client library in Go. It can be
+  used to interact with ejabberd from backend applications developed
+  in Go programming language.
 
-You need to configure ejabberd with OAuth support enabled. This is is
-documented in
+## Installation
+
+Both the library and the command-line tool can be installed from
+source with `go get` tool.
+
+If you have go installed in your environment you can install
+`ejabberd` command-line tool with:
+
+```bash
+go get -u github.com/processone/ejabberd-api
+```
+
+## Configuring ejabberd OAuth API
+
+Before being able to interact with ejabberd API, you need to configure
+ejabberd with OAuth support enabled. This is is documented in
 [ejabberd OAuth support](https://docs.ejabberd.im/admin/guide/oauth/).
 
-Here are example point to check / change in configuration:
+Here are example entries to check / change in your ejabberd
+configuration file:
 
 1. Add a listener for OAuth and ReST API:
 
@@ -51,15 +69,33 @@ Here are example point to check / change in configuration:
      mod_admin_extra: {}
    ```
 
-## Installation
+## ejabberd command-line tool
 
-The tool can be installed from source with `go get` tool.
+ejabberd command-line tool allow interacting ejabberd with ejabberd
+ReST API. It relies on OAuth tokens and scope to define the command
+the user will be allowed to call.
 
-If you have go installed in your environment you can install
-`ejabberd` command-line tool with:
+### Usage
+
+1. Generating an OAuth token:
+
+To use ejabberd command-line tool, you first need to generate an OAuth
+token.
+
+It can be done, for example, with the following command:
 
 ```bash
-go get -u github.com/processone/ejabberd-api
+ejabberd token -j admin@localhost -p mypassword -s ejabberd:admin
+```
+
+This will generate a `.ejabberd-oauth.json` file containing your
+credentials. Keep the file secret, as it will grant access to command
+available in the requested scope on your behalf.
+
+2. Calling ejabberd API from the command-line, using your token file. For example:
+
+```bash
+ejabberd stats registeredusers
 ```
 
 ### Generating Bash/ZSH completion
@@ -89,6 +125,7 @@ For ZSH, you can use:
 eval "$(ejabberd --completion-script-zsh)"
 ```
 
-## Commands
+## Available commands
 
 * **token**: Get OAuth token. This is needed before calling others commands.
+* **stats**: Retrieve some stats from ejabberd.
