@@ -119,8 +119,7 @@ func params(j jid, password, clientID, scope, ttl string) url.Values {
 		"client_id":     {clientID},
 		"redirect_uri":  {""},
 		"scope":         {scope},
-		"username":      {j.username},
-		"server":        {j.domain},
+		"username":      {j.bare()},
 		"password":      {password},
 		"ttl":           {ttl},
 	}
@@ -181,4 +180,8 @@ func parseJID(sjid string) (jid, error) {
 	j.username = s2[0]
 	j.domain = s2[1]
 	return j, nil
+}
+
+func (j jid) bare() string {
+	return fmt.Sprintf("%s@%s", j.username, j.domain)
 }
