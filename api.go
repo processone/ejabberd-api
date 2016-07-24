@@ -56,6 +56,8 @@ type command interface {
 	params() (HTTPParams, error)
 }
 
+//==============================================================================
+
 type GetStats struct {
 	Name string `json:"name"`
 }
@@ -85,6 +87,50 @@ func (g *GetStats) params() (HTTPParams, error) {
 		body:    body,
 	}, nil
 }
+
+//==============================================================================
+
+type RegisterUser struct {
+	JID      string `json:"jid"`
+	Password string `json:"password"`
+}
+
+func (r *RegisterUser) params() (HTTPParams, error) {
+	var query url.Values
+
+	jid, err := parseJID(r.JID)
+	if err != nil {
+		return HTTPParams{}, err
+	}
+
+	type register struct {
+		User     string `json:"user"`
+		Host     string `json:"host"`
+		Password string `json:"password"`
+	}
+
+	data := register{
+		User:     jid.username,
+		Host:     jid.domain,
+		Password: r.Password,
+	}
+
+	body, err := json.Marshal(data)
+	if err != nil {
+		return HTTPParams{}, err
+	}
+
+	return HTTPParams{
+		version: 1,
+		admin:   true,
+		method:  "POST",
+		path:    "register/",
+		query:   query,
+		body:    body,
+	}, nil
+}
+
+//==============================================================================
 
 func stringInSlice(a string, list []string) bool {
 	for _, b := range list {

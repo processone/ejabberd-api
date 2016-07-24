@@ -26,6 +26,12 @@ var (
 	// ========= stats =========
 	stats     = app.Command("stats", "Get ejabberd statistics.")
 	statsName = stats.Arg("name", "Name of stats to query.").Required().Enum("registeredusers", "onlineusers", "onlineusersnode", "uptimeseconds", "processes")
+
+	// ========= user =========
+	user          = app.Command("user", "Operations to perform on users.")
+	userOperation = user.Arg("operation", "Operation").Required().Enum("register")
+	userJID       = user.Flag("jid", "JID of the user to perform operation on.").Short('j').Required().String()
+	userPassword  = user.Flag("password", "User password").Short('p').Required().String()
 )
 
 func main() {
@@ -55,6 +61,8 @@ func execute(command string) {
 	switch command {
 	case stats.FullCommand():
 		statsCommand(c)
+	case user.FullCommand():
+		userCommand(c, *userOperation)
 	}
 }
 
@@ -85,7 +93,7 @@ func getToken() {
 	fmt.Println("Successfully saved token in file", *file)
 }
 
-// =============================================================================
+//==============================================================================
 
 func statsCommand(c ejabberd.Client) {
 	command := ejabberd.GetStats{
@@ -98,3 +106,26 @@ func statsCommand(c ejabberd.Client) {
 	}
 	fmt.Println(string(resp))
 }
+
+//==============================================================================
+
+func userCommand(c ejabberd.Client, op string) {
+	switch op {
+	case "register":
+		registerCommand(c, *userJID, *userPassword)
+	}
+}
+
+func registerCommand(c ejabberd.Client, j, p string) {
+	// TODO Should we create a v2 command with only two parameters (JID, Password)
+	command := ejabberd.RegisterUser{
+		JID:      j,
+		Password: p}
+	resp, err := c.Call(&command)
+	if err != nil {
+		kingpin.Fatalf("register command error %v: %s", command, err)
+	}
+	fmt.Println(string(resp))
+}
+
+// TODO Interface for command result formatting
