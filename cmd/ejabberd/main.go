@@ -19,7 +19,6 @@ var (
 	tokenPassword = token.Flag("password", "Password to use to retrieve user token.").Short('p').String()
 	tokenAskPass  = token.Flag("prompt", "Prompt for password.").Short('P').Bool()
 	tokenScope    = token.Flag("scope", "Comma separated list of scope to associate to token").Short('s').Default("sasl_auth").String()
-	tokenClient   = token.Flag("client", "Name of the application that will use the token.").Default("go-ejabberd").String()
 	tokenTTL      = token.Flag("ttl", "Time before token expiration. Valid unit time are second (s), minutes (m), hours (h)").Default("8760h").Short('t').Duration()
 	tokenEndpoint = token.Flag("endpoint", "ejabberd API endpoint.").Short('e').Default("http://localhost:5281/").String()
 	tokenOauthURL = token.Flag("oauth-url", "Oauth suffix for oauth endpoint.").Default("/oauth/").String()
@@ -70,7 +69,7 @@ func getToken() {
 		kingpin.Fatalf("invalid endpoint URL: %s", err)
 	}
 	scope := ejabberd.PrepareScope(*tokenScope)
-	if token, expiration, err = ejabberd.GetToken(url, *tokenJID, *tokenPassword, scope, *tokenClient, *tokenTTL); err != nil {
+	if token, expiration, err = ejabberd.GetToken(url, *tokenJID, *tokenPassword, scope, *tokenTTL); err != nil {
 		kingpin.Fatalf("could not retrieve token: %s", err)
 	}
 
