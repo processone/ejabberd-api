@@ -7,9 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -117,62 +115,3 @@ func params(j jid, password, scope, ttl string) url.Values {
 }
 
 // =============================================================================
-
-// Helpers for command-line tool
-
-// JoinURL checks that Base URL is a valid URL and joins base URL with
-// the method suffix string.
-func JoinURL(baseURL string, suffix string) (string, error) {
-	var u *url.URL
-	var err error
-
-	if u, err = url.Parse(baseURL); err != nil {
-		return "", fmt.Errorf("invalid url: %s", baseURL)
-	}
-
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return "", fmt.Errorf("invalid url scheme: %s", u.Scheme)
-	}
-
-	u.Path = path.Join(u.Path, suffix)
-	return u.String(), nil
-}
-
-// PrepareScope ensures we return scopes as space separated. However,
-// we accept comma separated scopes as input as well for convenience.
-func PrepareScope(s string) string {
-	return strings.Replace(s, ",", " ", -1)
-}
-
-// =============================================================================
-
-// JID processing
-// TODO update gox and import it directly from gox
-
-type jid struct {
-	username string
-	domain   string
-	resource string
-}
-
-func parseJID(sjid string) (jid, error) {
-	var j jid
-
-	s1 := strings.SplitN(sjid, "/", 2)
-	if len(s1) > 1 {
-		j.resource = s1[1]
-	}
-
-	s2 := strings.Split(s1[0], "@")
-	if len(s2) != 2 {
-		return jid{}, errors.New("invalid jid")
-	}
-
-	j.username = s2[0]
-	j.domain = s2[1]
-	return j, nil
-}
-
-func (j jid) bare() string {
-	return fmt.Sprintf("%s@%s", j.username, j.domain)
-}
