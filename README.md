@@ -128,7 +128,17 @@ For ZSH, you can use:
 eval "$(ejabberd --completion-script-zsh)"
 ```
 
-## Available commands
+### Available commands
 
 * **token**: Get OAuth token. This is needed before calling others commands.
 * **stats**: Retrieve some stats from ejabberd.
+
+## Development
+
+### Running tests
+
+You can run tests from repository clone with command:
+
+```bash
+go test -race -v ./.
+```
