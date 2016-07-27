@@ -27,7 +27,7 @@ func (f OAuthFile) Save(file string) error {
 }
 
 // ReadOAuthFile reads the content of JSon Oauth token file and return
-// propper OAuthFile structure.
+// proper OAuthFile structure.
 func ReadOAuthFile(file string) (OAuthFile, error) {
 	var f OAuthFile
 	data, err := ioutil.ReadFile(file)
