@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/processone/ejabberd-api"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -69,23 +68,19 @@ func execute(command string) {
 // =============================================================================
 
 func getToken() {
-	var token string
-	var expiration time.Time
-	var url string
+	var token ejabberd.OAuthToken
 	var err error
-	if url, err = ejabberd.JoinURL(*tokenEndpoint, *tokenOauthURL); err != nil {
-		kingpin.Fatalf("invalid endpoint URL: %s", err)
-	}
+	client := ejabberd.Client{URL: *tokenEndpoint, OAuthPath: *tokenOauthURL}
 	scope := ejabberd.PrepareScope(*tokenScope)
-	if token, expiration, err = ejabberd.GetToken(url, *tokenJID, *tokenPassword, scope, *tokenTTL); err != nil {
+	if token, err = client.GetToken(*tokenJID, *tokenPassword, scope, *tokenTTL); err != nil {
 		kingpin.Fatalf("could not retrieve token: %s", err)
 	}
 
 	var f ejabberd.OAuthFile
-	f.AccessToken = token
+	f.AccessToken = token.AccessToken
 	f.JID = *tokenJID
 	f.Scope = scope
-	f.Expiration = expiration
+	f.Expiration = token.Expiration
 	f.Endpoint = *tokenEndpoint
 	if err = f.Save(*file); err != nil {
 		kingpin.Fatalf("could not save token to file %q: %s", *file, err)

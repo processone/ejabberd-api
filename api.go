@@ -9,12 +9,6 @@ import (
 	"net/url"
 )
 
-// Client is an ejabberd client API wrapper.
-type Client struct {
-	URL   string
-	Token string
-}
-
 // Call performs the HTTP call to the API given client parameters.
 func (c Client) Call(comm command) ([]byte, error) {
 	p, err := comm.params()
