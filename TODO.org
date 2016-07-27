@@ -6,8 +6,9 @@
 
 * ejabberd command-line
 
-*** Add prompt for password on oauth token generation with -P
-*** Refactor code to streamline the workflow / avoid duplication of processing between structure oauthToken and file.
+** Add a way to call any command by posting any JSON payload to any API endpoint.
+** Add prompt for password on oauth token generation with -P
+** Refactor code to streamline the workflow / avoid duplication of processing between structure oauthToken and file.
 Oauthtoken should be probably serializable as is.
-*** Verbose mode to help debug request.
-*** Option to print value as text or JSON.
+** Verbose mode to help debug request.
+** Option to print value as text or JSON.
