@@ -11,6 +11,7 @@ import (
 var (
 	app  = kingpin.New("ejabberd", "A command-line front-end for ejabberd server API.").Version("0.0.1").Author("ProcessOne")
 	file = app.Flag("file", "OAuth token JSON file.").Short('f').Default(".ejabberd-oauth.json").String()
+	json = app.Flag("json", "JSON formatted output").Bool()
 
 	// ========= token =========
 	token         = app.Command("token", "Request an OAuth token.")
@@ -57,11 +58,21 @@ func execute(command string) {
 		Token:   f.AccessToken,
 	}
 
+	var resp ejabberd.Response
 	switch command {
 	case stats.FullCommand():
-		statsCommand(c)
+		resp = statsCommand(c)
 	case user.FullCommand():
-		userCommand(c, *userOperation)
+		resp = userCommand(c, *userOperation)
+	}
+	format(resp)
+}
+
+func format(resp ejabberd.Response) {
+	if *json {
+		fmt.Println(resp.JSON())
+	} else {
+		fmt.Println(resp)
 	}
 }
 
@@ -90,7 +101,7 @@ func getToken() {
 
 //==============================================================================
 
-func statsCommand(c ejabberd.Client) {
+func statsCommand(c ejabberd.Client) ejabberd.Response {
 	command := ejabberd.Stats{
 		Name: *statsName,
 	}
@@ -99,19 +110,21 @@ func statsCommand(c ejabberd.Client) {
 	if err != nil {
 		kingpin.Fatalf("stats command error %q: %s", command.Name, err)
 	}
-	fmt.Println(resp)
+	return resp
 }
 
 //==============================================================================
 
-func userCommand(c ejabberd.Client, op string) {
+func userCommand(c ejabberd.Client, op string) ejabberd.Response {
+	var resp ejabberd.Response
 	switch op {
 	case "register":
-		registerCommand(c, *userJID, *userPassword)
+		resp = registerCommand(c, *userJID, *userPassword)
 	}
+	return resp
 }
 
-func registerCommand(c ejabberd.Client, j, p string) {
+func registerCommand(c ejabberd.Client, j, p string) ejabberd.Response {
 	// TODO Should we create a v2 command with only two parameters (JID, Password)
 	command := ejabberd.Register{
 		JID:      j,
@@ -120,7 +133,7 @@ func registerCommand(c ejabberd.Client, j, p string) {
 	if err != nil {
 		kingpin.Fatalf("register command error %v: %s", command, err)
 	}
-	fmt.Println(resp)
+	return resp
 }
 
 // TODO Interface for command result formatting
