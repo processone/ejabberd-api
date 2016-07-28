@@ -154,7 +154,7 @@ For example:
 
 ```json
 {"AccessToken":"AaQTb0PUZqeZhFKYoaTQBb4KKkCTAolE",
- "Endpoint":"http://localhost:5281/"
+ "Endpoint":"http://localhost:5281/",
  "JID":"admin@localhost",
  "Scope":"ejabberd:admin",
  "Expiration":"2017-07-23T13:53:08.326421575+02:00"}
