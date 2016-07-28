@@ -41,8 +41,10 @@ func (c *Client) tokenURL() (string, error) {
 
 // TODO Get token from local file
 
-// GetToken calls ejabberd API to get a for a given scope, given valid jid and password.
-// We also assume that the user has the right to generate a token.
+// GetToken calls ejabberd API to get a token for a given scope, given
+// valid jid and password.  We also assume that the user has the right
+// to generate a token. In case of doubt you need to check ejabberd
+// access option `oauth_access`.
 func (c *Client) GetToken(sjid, password, scope string, duration time.Duration) (OAuthToken, error) {
 	var j jid
 	var t OAuthToken

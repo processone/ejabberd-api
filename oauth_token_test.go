@@ -8,11 +8,12 @@ import (
 	"testing"
 )
 
-func Test_GetOauthToken(t *testing.T) {
+func Test_GetToken(t *testing.T) {
+	accessToken := "12345"
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, `{"access_token": "12345"}`)
+		fmt.Fprintln(w, `{"access_token": "`+accessToken+`"}`)
 	}))
 	defer server.Close()
 
@@ -26,8 +27,10 @@ func Test_GetOauthToken(t *testing.T) {
 	client := Client{URL: "http://localhost:5281", HTTPClient: &http.Client{Transport: transport}}
 	token, err := client.GetToken("admin@localhost", "passw0rd", "sasl-auth", 3600)
 	if err != nil {
-		t.Errorf("GetOAuthToken failed: %s", err)
+		t.Errorf("GetToken failed: %s", err)
 	}
 
-	fmt.Println(token)
+	if token.AccessToken != accessToken {
+		t.Errorf("Incorrect access token  %s != %s", token.AccessToken, accessToken)
+	}
 }
