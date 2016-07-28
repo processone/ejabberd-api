@@ -59,7 +59,7 @@ configuration file:
      - allow:
        - user: "admin@localhost"
    commands:
-     - add_commands: ['ejabberd:user', user, admin, open]
+     - add_commands: [user, admin, open]
    oauth_expire: 32000000
    oauth_access: all
    ```
