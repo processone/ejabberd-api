@@ -24,19 +24,36 @@ type APIParams struct {
 // Request is the common interface to all ejabberd requests.
 type Request interface {
 	params() (APIParams, error)
+	parseResponse([]byte) (Response, error)
 }
 
 // Response is the command interface for all ejabberd API call
 // results.
 type Response interface {
-	hasError() bool
+	errorCode() int
 }
 
-// Call performs the HTTP call to the API given client parameters.
-func (c Client) Call(req Request) ([]byte, error) {
+// Call performs the HTTP call to ejabberd API given client
+// parameters. It returns a struct complying with Response interface.
+func (c Client) Call(req Request) (Response, error) {
+	resp, err := c.CallRaw(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return req.parseResponse(resp)
+}
+
+// CallRaw performs HTTP call to ejabberd API and returns Raw Body
+// reponse from the server as slice of bytes.
+func (c Client) CallRaw(req Request) ([]byte, error) {
 	p, err := req.params()
 	if err != nil {
 		return []byte{}, err
+	}
+
+	if c.HTTPClient == nil {
+		c.HTTPClient = &http.Client{}
 	}
 
 	url := c.BaseURL + p.name + "/"
