@@ -95,11 +95,11 @@ func statsCommand(c ejabberd.Client) {
 		Name: *statsName,
 	}
 
-	resp, err := c.CallRaw(&command)
+	resp, err := c.Call(&command)
 	if err != nil {
 		kingpin.Fatalf("stats command error %q: %s", command.Name, err)
 	}
-	fmt.Println(string(resp))
+	fmt.Println(resp)
 }
 
 //==============================================================================
@@ -116,11 +116,11 @@ func registerCommand(c ejabberd.Client, j, p string) {
 	command := ejabberd.RegisterRequest{
 		JID:      j,
 		Password: p}
-	resp, err := c.CallRaw(&command)
+	resp, err := c.Call(&command)
 	if err != nil {
 		kingpin.Fatalf("register command error %v: %s", command, err)
 	}
-	fmt.Println(string(resp))
+	fmt.Println(resp)
 }
 
 // TODO Interface for command result formatting

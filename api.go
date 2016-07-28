@@ -30,7 +30,7 @@ type Request interface {
 // Response is the command interface for all ejabberd API call
 // results.
 type Response interface {
-	errorCode() int
+	JSON() string
 }
 
 // Call performs the HTTP call to ejabberd API given client
@@ -69,6 +69,7 @@ func (c Client) CallRaw(req Request) ([]byte, error) {
 		return []byte{}, err
 	}
 
+	// TODO: We should limit the amount of data the client reads from ejabberd as response
 	body, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	return body, err
@@ -81,7 +82,15 @@ type StatsRequest struct {
 }
 
 type StatsResponse struct {
-	errCode int
+	Stat int `json:"stat"`
+}
+
+func (StatsResponse) JSON() string {
+	return "TODO"
+}
+
+func (s StatsResponse) String() string {
+	return fmt.Sprintf("%d", s.Stat)
 }
 
 func (g StatsRequest) knownStats() []string {
@@ -117,13 +126,9 @@ func (g StatsRequest) parseResponse(body []byte) (Response, error) {
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
 		// Cannot parse JSON response
-		resp.errCode = 99
+		return ErrorResponse{Code: 99}, err
 	}
 	return resp, err
-}
-
-func (r StatsResponse) errorCode() int {
-	return r.errCode
 }
 
 //==============================================================================
@@ -131,10 +136,6 @@ func (r StatsResponse) errorCode() int {
 type RegisterRequest struct {
 	JID      string `json:"jid"`
 	Password string `json:"password"`
-}
-
-type RegisterResponse struct {
-	errCode int
 }
 
 func (r *RegisterRequest) params() (APIParams, error) {
@@ -180,11 +181,28 @@ func (r RegisterRequest) parseResponse(body []byte) (Response, error) {
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
 		// Cannot parse JSON response
-		resp.errCode = 99
+		return ErrorResponse{Code: 99}, err
 	}
-	return resp, err
+	return resp, nil
 }
 
-func (r RegisterResponse) errorCode() int {
-	return r.errCode
+type RegisterResponse string
+
+func (RegisterResponse) JSON() string {
+	return "TODO"
+}
+
+//==============================================================================
+
+type ErrorResponse struct {
+	Code        int
+	Description string
+}
+
+func (e ErrorResponse) JSON() string {
+	return "TODO"
+}
+
+func (e ErrorResponse) String() string {
+	return fmt.Sprintf("Error %d: %s", e.Code, e.Description)
 }

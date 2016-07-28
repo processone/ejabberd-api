@@ -84,7 +84,6 @@ func (c *Client) GetToken(sjid, password, scope string, duration time.Duration) 
 }
 
 //===============================
-// http_api.go
 
 func httpGetToken(c *http.Client, apiURL string, params url.Values) (OAuthToken, error) {
 	var t OAuthToken
