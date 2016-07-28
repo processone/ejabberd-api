@@ -9,11 +9,12 @@ import (
 // OAuthFile defines ejabberd OAuth file structure.
 type OAuthFile struct {
 	AccessToken string
+	Endpoint    string
+
 	// Reminder of parameters associated with the token
 	JID        string
 	Scope      string
 	Expiration time.Time
-	Endpoint   string
 }
 
 // Save write ejabberd OAuth structure to file.
