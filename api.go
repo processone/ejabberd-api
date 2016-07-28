@@ -9,32 +9,8 @@ import (
 	"net/url"
 )
 
-// HTTPParams gathers all values needed by the client to encode actual
-// ejabberd API call.
-type APIParams struct {
-	name    string
-	version int
-	admin   bool // Does API require admin header ?
-
-	method string
-	query  url.Values
-	body   []byte
-}
-
-// Request is the common interface to all ejabberd requests.
-type Request interface {
-	params() (APIParams, error)
-	parseResponse([]byte) (Response, error)
-}
-
-// Response is the command interface for all ejabberd API call
-// results.
-type Response interface {
-	JSON() string
-}
-
-// Call performs the HTTP call to ejabberd API given client
-// parameters. It returns a struct complying with Response interface.
+// Call performs HTTP call to ejabberd API given client parameters. It
+// returns a struct complying with Response interface.
 func (c Client) Call(req Request) (Response, error) {
 	resp, err := c.CallRaw(req)
 	if err != nil {
@@ -75,14 +51,39 @@ func (c Client) CallRaw(req Request) ([]byte, error) {
 	return body, err
 }
 
+// Request is the common interface to all ejabberd requests.
+type Request interface {
+	params() (apiParams, error)
+	parseResponse([]byte) (Response, error)
+}
+
+// Response is the command interface for all ejabberd API call
+// results.
+type Response interface {
+	JSON() string
+}
+
+// apiParams gathers all values needed by the client to encode actual
+// ejabberd API call.
+type apiParams struct {
+	name    string
+	version int
+	admin   bool // Does API require admin header ?
+
+	method string
+	query  url.Values
+	body   []byte
+}
+
 //==============================================================================
 
-type StatsRequest struct {
+type Stats struct {
 	Name string `json:"name"`
 }
 
 type StatsResponse struct {
-	Stat int `json:"stat"`
+	Name string `json:"name"`
+	Stat int    `json:"stat"`
 }
 
 func (StatsResponse) JSON() string {
@@ -93,57 +94,63 @@ func (s StatsResponse) String() string {
 	return fmt.Sprintf("%d", s.Stat)
 }
 
-func (g StatsRequest) knownStats() []string {
-	return []string{"registeredusers", "onlineusers", "onlineusersnode",
-		"uptimeseconds", "processes"}
-}
-
-func (g *StatsRequest) params() (APIParams, error) {
+func (s *Stats) params() (apiParams, error) {
 	var query url.Values
-	if !stringInSlice(g.Name, g.knownStats()) {
-		return APIParams{}, fmt.Errorf("unknow statistic: %s", g.Name)
+	if !stringInSlice(s.Name, s.knownStats()) {
+		return apiParams{}, fmt.Errorf("unknow statistic: %s", s.Name)
 	}
 
-	body, err := json.Marshal(g)
+	body, err := json.Marshal(s)
 	if err != nil {
-		return APIParams{}, err
+		return apiParams{}, err
 	}
 
-	return APIParams{
+	return apiParams{
 		name:    "stats",
 		version: 1,
 
 		admin:  true,
 		method: "POST",
-
-		query: query,
-		body:  body,
+		query:  query,
+		body:   body,
 	}, nil
 }
 
-func (g StatsRequest) parseResponse(body []byte) (Response, error) {
+func (s Stats) parseResponse(body []byte) (Response, error) {
 	var resp StatsResponse
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
 		// Cannot parse JSON response
 		return ErrorResponse{Code: 99}, err
 	}
+	resp.Name = s.Name
 	return resp, err
+}
+
+func (s Stats) knownStats() []string {
+	return []string{"registeredusers", "onlineusers", "onlineusersnode",
+		"uptimeseconds", "processes"}
 }
 
 //==============================================================================
 
-type RegisterRequest struct {
+type Register struct {
 	JID      string `json:"jid"`
 	Password string `json:"password"`
 }
 
-func (r *RegisterRequest) params() (APIParams, error) {
+type RegisterResponse string
+
+func (RegisterResponse) JSON() string {
+	return "TODO"
+}
+
+func (r *Register) params() (apiParams, error) {
 	var query url.Values
 
 	jid, err := parseJID(r.JID)
 	if err != nil {
-		return APIParams{}, err
+		return apiParams{}, err
 	}
 
 	// Actual parameters for ejabberd. We expose JID string as it is
@@ -162,10 +169,10 @@ func (r *RegisterRequest) params() (APIParams, error) {
 
 	body, err := json.Marshal(data)
 	if err != nil {
-		return APIParams{}, err
+		return apiParams{}, err
 	}
 
-	return APIParams{
+	return apiParams{
 		name:    "register",
 		version: 1,
 		admin:   true,
@@ -176,7 +183,7 @@ func (r *RegisterRequest) params() (APIParams, error) {
 	}, nil
 }
 
-func (r RegisterRequest) parseResponse(body []byte) (Response, error) {
+func (r Register) parseResponse(body []byte) (Response, error) {
 	var resp RegisterResponse
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
@@ -184,12 +191,6 @@ func (r RegisterRequest) parseResponse(body []byte) (Response, error) {
 		return ErrorResponse{Code: 99}, err
 	}
 	return resp, nil
-}
-
-type RegisterResponse string
-
-func (RegisterResponse) JSON() string {
-	return "TODO"
 }
 
 //==============================================================================

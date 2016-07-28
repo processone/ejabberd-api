@@ -22,23 +22,6 @@ type Client struct {
 	Token string
 }
 
-func (c *Client) tokenURL() (string, error) {
-	var path string
-	var err error
-
-	if c.OAuthPath == "" {
-		path, err = JoinURL(c.BaseURL, "oauth")
-	} else {
-		path, err = JoinURL(c.BaseURL, c.OAuthPath)
-	}
-
-	if err != nil {
-		return c.BaseURL, err
-	}
-
-	return JoinURL(path, "token")
-}
-
 // TODO Get token from local file
 
 // GetToken calls ejabberd API to get a token for a given scope, given
@@ -119,4 +102,24 @@ func httpGetToken(c *http.Client, apiURL string, params url.Values) (OAuthToken,
 	t.Expiration = time.Now().Add(time.Duration(r.ExpiresIn) * time.Second)
 
 	return t, nil
+}
+
+//==============================================================================
+// Helpers
+
+func (c *Client) tokenURL() (string, error) {
+	var path string
+	var err error
+
+	if c.OAuthPath == "" {
+		path, err = JoinURL(c.BaseURL, "oauth")
+	} else {
+		path, err = JoinURL(c.BaseURL, c.OAuthPath)
+	}
+
+	if err != nil {
+		return c.BaseURL, err
+	}
+
+	return JoinURL(path, "token")
 }

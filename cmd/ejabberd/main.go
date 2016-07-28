@@ -91,7 +91,7 @@ func getToken() {
 //==============================================================================
 
 func statsCommand(c ejabberd.Client) {
-	command := ejabberd.StatsRequest{
+	command := ejabberd.Stats{
 		Name: *statsName,
 	}
 
@@ -113,7 +113,7 @@ func userCommand(c ejabberd.Client, op string) {
 
 func registerCommand(c ejabberd.Client, j, p string) {
 	// TODO Should we create a v2 command with only two parameters (JID, Password)
-	command := ejabberd.RegisterRequest{
+	command := ejabberd.Register{
 		JID:      j,
 		Password: p}
 	resp, err := c.Call(&command)
