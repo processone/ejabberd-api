@@ -53,8 +53,8 @@ func execute(command string) {
 	}
 
 	c := ejabberd.Client{
-		URL:   f.Endpoint + "api/",
-		Token: f.AccessToken,
+		BaseURL: f.Endpoint + "api/",
+		Token:   f.AccessToken,
 	}
 
 	switch command {
@@ -70,7 +70,7 @@ func execute(command string) {
 func getToken() {
 	var token ejabberd.OAuthToken
 	var err error
-	client := ejabberd.Client{URL: *tokenEndpoint, OAuthPath: *tokenOauthURL}
+	client := ejabberd.Client{BaseURL: *tokenEndpoint, OAuthPath: *tokenOauthURL}
 	scope := ejabberd.PrepareScope(*tokenScope)
 	if token, err = client.GetToken(*tokenJID, *tokenPassword, scope, *tokenTTL); err != nil {
 		kingpin.Fatalf("could not retrieve token: %s", err)
@@ -91,7 +91,7 @@ func getToken() {
 //==============================================================================
 
 func statsCommand(c ejabberd.Client) {
-	command := ejabberd.GetStats{
+	command := ejabberd.StatsRequest{
 		Name: *statsName,
 	}
 
@@ -113,7 +113,7 @@ func userCommand(c ejabberd.Client, op string) {
 
 func registerCommand(c ejabberd.Client, j, p string) {
 	// TODO Should we create a v2 command with only two parameters (JID, Password)
-	command := ejabberd.RegisterUser{
+	command := ejabberd.RegisterRequest{
 		JID:      j,
 		Password: p}
 	resp, err := c.Call(&command)

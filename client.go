@@ -14,7 +14,7 @@ import (
 // Client is an ejabberd client API wrapper. It is used to manage
 // ejabberd client API interactions.
 type Client struct {
-	URL        string
+	BaseURL    string
 	OAuthPath  string
 	HTTPClient *http.Client
 
@@ -27,13 +27,13 @@ func (c *Client) tokenURL() (string, error) {
 	var err error
 
 	if c.OAuthPath == "" {
-		path, err = JoinURL(c.URL, "oauth")
+		path, err = JoinURL(c.BaseURL, "oauth")
 	} else {
-		path, err = JoinURL(c.URL, c.OAuthPath)
+		path, err = JoinURL(c.BaseURL, c.OAuthPath)
 	}
 
 	if err != nil {
-		return c.URL, err
+		return c.BaseURL, err
 	}
 
 	return JoinURL(path, "token")

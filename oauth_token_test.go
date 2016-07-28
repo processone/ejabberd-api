@@ -24,7 +24,7 @@ func Test_GetToken(t *testing.T) {
 		},
 	}
 
-	client := Client{URL: "http://localhost:5281", HTTPClient: &http.Client{Transport: transport}}
+	client := Client{BaseURL: "http://localhost:5281", HTTPClient: &http.Client{Transport: transport}}
 	token, err := client.GetToken("admin@localhost", "passw0rd", "sasl-auth", 3600)
 	if err != nil {
 		t.Errorf("GetToken failed: %s", err)
