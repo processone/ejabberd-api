@@ -60,7 +60,8 @@ configuration file:
        - user: "admin@localhost"
    commands:
      - add_commands: [user, admin, open]
-   oauth_expire: 32000000
+   # Tokens are valid for a year as default:
+   oauth_expire: 31536000
    oauth_access: all
    ```
 
