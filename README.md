@@ -134,6 +134,32 @@ eval "$(ejabberd --completion-script-zsh)"
 * **token**: Get OAuth token. This is needed before calling others commands.
 * **stats**: Retrieve some stats from ejabberd.
 
+### OAuth Token file format
+
+As a default, the token is stored in a file called
+`./.ejabberd-oauth.json` when using the command `token` and read from
+the same file when you use any other commands.
+
+Option `-f file` will let you point to another file.
+
+The file contains a JSON structure with the following fields:
+
+* "AccessToken": Actual token value.
+* "Endpoint": Base URL.
+* "JID": JID for which user the token was generated.
+* "Scope": OAuth scope for which the token was generated.
+* "Expiration": Expiration date for the token.
+
+For example:
+
+```json
+{"AccessToken":"AaQTb0PUZqeZhFKYoaTQBb4KKkCTAolE",
+ "Endpoint":"http://localhost:5281/"
+ "JID":"admin@localhost",
+ "Scope":"ejabberd:admin",
+ "Expiration":"2017-07-23T13:53:08.326421575+02:00"}
+```
+
 ## Development
 
 ### Running tests
