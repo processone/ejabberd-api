@@ -68,9 +68,9 @@ func (c Client) CallRaw(req Request) ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
-	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
 	return body, err
 }
 
@@ -78,6 +78,10 @@ func (c Client) CallRaw(req Request) ([]byte, error) {
 
 type StatsRequest struct {
 	Name string `json:"name"`
+}
+
+type StatsResponse struct {
+	errCode int
 }
 
 func (g StatsRequest) knownStats() []string {
@@ -108,11 +112,29 @@ func (g *StatsRequest) params() (APIParams, error) {
 	}, nil
 }
 
+func (g StatsRequest) parseResponse(body []byte) (Response, error) {
+	var resp StatsResponse
+	err := json.Unmarshal(body, &resp)
+	if err != nil {
+		// Cannot parse JSON response
+		resp.errCode = 99
+	}
+	return resp, err
+}
+
+func (r StatsResponse) errorCode() int {
+	return r.errCode
+}
+
 //==============================================================================
 
 type RegisterRequest struct {
 	JID      string `json:"jid"`
 	Password string `json:"password"`
+}
+
+type RegisterResponse struct {
+	errCode int
 }
 
 func (r *RegisterRequest) params() (APIParams, error) {
@@ -123,7 +145,7 @@ func (r *RegisterRequest) params() (APIParams, error) {
 		return APIParams{}, err
 	}
 
-	// Actual parameter for ejabberd. We expose JID string as it is
+	// Actual parameters for ejabberd. We expose JID string as it is
 	// easier to manipulate from a client.
 	type register struct {
 		User     string `json:"user"`
@@ -151,4 +173,18 @@ func (r *RegisterRequest) params() (APIParams, error) {
 		query:  query,
 		body:   body,
 	}, nil
+}
+
+func (r RegisterRequest) parseResponse(body []byte) (Response, error) {
+	var resp RegisterResponse
+	err := json.Unmarshal(body, &resp)
+	if err != nil {
+		// Cannot parse JSON response
+		resp.errCode = 99
+	}
+	return resp, err
+}
+
+func (r RegisterResponse) errorCode() int {
+	return r.errCode
 }
