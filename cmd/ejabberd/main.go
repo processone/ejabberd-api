@@ -52,7 +52,9 @@ func execute(command string) {
 	if err != nil {
 		kingpin.Fatalf("could not load token file %q: %s", *file, err)
 	}
-
+	if t.AccessToken == "" {
+		kingpin.Fatalf("could not find access_token in file %q", *file)
+	}
 	c := ejabberd.Client{
 		BaseURL: t.Endpoint,
 		APIPath: "api/",
