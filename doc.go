@@ -55,6 +55,18 @@ are enabled, for example:
    modules:
      mod_admin_extra: {}
 
+Using ejabberd client API
+
+To use ejabberd Go client API, you need to have a token. If you do not
+have one, you can get one programatically using 'Client.GetToken'
+function.
+
+From there, you can use any ejabberd client function to call any
+ejabberd available command.
+
+Check 'ejabberd.Client' documentation for details on the currently
+available commands.
+
 OAuth Token file format
 
 As a default, the token is stored in a file called
