@@ -1,5 +1,5 @@
 /*
-Package ejabberd expose ejabberd API in Go programming language.
+Package ejabberd exposes ejabberd API in Go programming language.
 
 Installation
 
