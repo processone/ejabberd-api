@@ -54,7 +54,8 @@ func execute(command string) {
 	}
 
 	c := ejabberd.Client{
-		BaseURL: t.Endpoint + "api/",
+		BaseURL: t.Endpoint,
+		APIPath: "api/",
 		Token:   t.AccessToken,
 	}
 
