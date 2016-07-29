@@ -1,9 +1,7 @@
 package ejabberd
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -27,7 +25,7 @@ type Client struct {
 // GetToken calls ejabberd API to get a token for a given scope, given
 // valid jid and password.  We also assume that the user has the right
 // to generate a token. In case of doubt you need to check ejabberd
-// access option `oauth_access`.
+// access option 'oauth_access'.
 func (c *Client) GetToken(sjid, password, scope string, duration time.Duration) (OAuthToken, error) {
 	var j jid
 	var t OAuthToken
@@ -47,10 +45,9 @@ func (c *Client) GetToken(sjid, password, scope string, duration time.Duration) 
 	}
 
 	ttl := int(duration.Seconds())
-
 	now := time.Now()
 
-	params := params(j, password, scope, strconv.Itoa(ttl))
+	params := tokenParams(j, password, scope, strconv.Itoa(ttl))
 	if t, err = httpGetToken(c.HTTPClient, u, params); err != nil {
 		return t, err
 	}
@@ -59,49 +56,37 @@ func (c *Client) GetToken(sjid, password, scope string, duration time.Duration) 
 		t.Expiration = now.Add(duration)
 	}
 
-	if t.error != "" {
-		return t, fmt.Errorf(t.error)
-	}
-
 	return t, nil
 }
 
 //===============================
 
 func httpGetToken(c *http.Client, apiURL string, params url.Values) (OAuthToken, error) {
-	var t OAuthToken
-
+	// Performs HTTP request
 	resp, err := c.PostForm(apiURL, params)
-
 	if err != nil {
-		return t, err
+		return OAuthToken{}, err
 	}
-
 	defer resp.Body.Close()
 
+	// Endpoint not found
 	if resp.StatusCode == 404 {
-		return t, errors.New("oauth endpoint not found (404)")
+		return OAuthToken{}, errors.New("oauth endpoint not found (404)")
 	}
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	// Cannot read HTTP response
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return OAuthToken{}, errors.New("cannot read HTTP response from server")
+	}
 
+	// Bad request
 	if resp.StatusCode == 400 {
-		var e jsonError
-		if err := json.Unmarshal(body, &e); err != nil {
-			return t, errors.New("bad request")
-		}
-		return t, errors.New(e.Description)
+		return OAuthToken{}, parseTokenError(body)
 	}
 
-	var r jsonResp
-	if err := json.Unmarshal(body, &r); err != nil {
-		return t, err
-	}
-
-	t.AccessToken = r.AccessToken
-	t.Expiration = time.Now().Add(time.Duration(r.ExpiresIn) * time.Second)
-
-	return t, nil
+	// Success
+	return parseTokenResponse(body)
 }
 
 //==============================================================================

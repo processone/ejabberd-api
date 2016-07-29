@@ -48,14 +48,14 @@ func main() {
 }
 
 func execute(command string) {
-	f, err := ejabberd.ReadOAuthFile(*file)
+	t, err := ejabberd.ReadOAuthToken(*file)
 	if err != nil {
 		kingpin.Fatalf("could not load token file %q: %s", *file, err)
 	}
 
 	c := ejabberd.Client{
-		BaseURL: f.Endpoint + "api/",
-		Token:   f.AccessToken,
+		BaseURL: t.Endpoint + "api/",
+		Token:   t.AccessToken,
 	}
 
 	var resp ejabberd.Response
@@ -87,13 +87,10 @@ func getToken() {
 		kingpin.Fatalf("could not retrieve token: %s", err)
 	}
 
-	var f ejabberd.OAuthFile
-	f.AccessToken = token.AccessToken
-	f.JID = *tokenJID
-	f.Scope = scope
-	f.Expiration = token.Expiration
-	f.Endpoint = *tokenEndpoint
-	if err = f.Save(*file); err != nil {
+	token.JID = *tokenJID
+	token.Scope = scope
+	token.Endpoint = *tokenEndpoint
+	if err = token.Save(*file); err != nil {
 		kingpin.Fatalf("could not save token to file %q: %s", *file, err)
 	}
 	fmt.Println("Successfully saved token in file", *file)
