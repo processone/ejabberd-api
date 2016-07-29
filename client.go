@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -45,7 +46,7 @@ func (c Client) CallRaw(req Request) ([]byte, error) {
 	}
 
 	if c.HTTPClient == nil {
-		c.HTTPClient = &http.Client{}
+		c.HTTPClient = defaultHTTPClient(15 * time.Second)
 	}
 
 	var url string
@@ -87,7 +88,7 @@ func (c Client) GetToken(sjid, password, scope string, duration time.Duration) (
 
 	// Set default values
 	if c.HTTPClient == nil {
-		c.HTTPClient = &http.Client{}
+		c.HTTPClient = defaultHTTPClient(15 * time.Second)
 	}
 
 	if j, err = parseJID(sjid); err != nil {
@@ -126,4 +127,20 @@ func (c Client) Stats(s Stats) (StatsResponse, error) {
 	}
 	resp := result.(StatsResponse)
 	return resp, nil
+}
+
+//==============================================================================
+
+// Pass default timeout
+func defaultHTTPClient(timeout time.Duration) *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			Dial: (&net.Dialer{
+				Timeout:   timeout,
+				KeepAlive: 30 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout: timeout,
+		},
+	}
 }
