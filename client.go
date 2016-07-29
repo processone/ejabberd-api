@@ -1,10 +1,7 @@
 package ejabberd
 
 import (
-	"errors"
-	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 )
@@ -31,6 +28,7 @@ func (c *Client) GetToken(sjid, password, scope string, duration time.Duration) 
 	var t OAuthToken
 	var err error
 
+	// Set default values
 	if c.HTTPClient == nil {
 		c.HTTPClient = &http.Client{}
 	}
@@ -44,47 +42,13 @@ func (c *Client) GetToken(sjid, password, scope string, duration time.Duration) 
 		return t, err
 	}
 
+	// Prepare token call parameters
 	ttl := int(duration.Seconds())
-	now := time.Now()
-
 	params := tokenParams(j, password, scope, strconv.Itoa(ttl))
+
+	// Request token from server
 	if t, err = httpGetToken(c.HTTPClient, u, params); err != nil {
 		return t, err
 	}
-
-	if t.Expiration.IsZero() {
-		t.Expiration = now.Add(duration)
-	}
-
 	return t, nil
-}
-
-//===============================
-
-func httpGetToken(c *http.Client, apiURL string, params url.Values) (OAuthToken, error) {
-	// Performs HTTP request
-	resp, err := c.PostForm(apiURL, params)
-	if err != nil {
-		return OAuthToken{}, err
-	}
-	defer resp.Body.Close()
-
-	// Endpoint not found
-	if resp.StatusCode == 404 {
-		return OAuthToken{}, errors.New("oauth endpoint not found (404)")
-	}
-
-	// Cannot read HTTP response
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return OAuthToken{}, errors.New("cannot read HTTP response from server")
-	}
-
-	// Bad request
-	if resp.StatusCode == 400 {
-		return OAuthToken{}, parseTokenError(body)
-	}
-
-	// Success
-	return parseTokenResponse(body)
 }

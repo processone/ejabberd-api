@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"time"
 )
@@ -48,6 +49,34 @@ func ReadOAuthToken(file string) (OAuthToken, error) {
 
 //==============================================================================
 // HTTP
+
+func httpGetToken(c *http.Client, apiURL string, params url.Values) (OAuthToken, error) {
+	// Performs HTTP request
+	resp, err := c.PostForm(apiURL, params)
+	if err != nil {
+		return OAuthToken{}, err
+	}
+	defer resp.Body.Close()
+
+	// Endpoint not found
+	if resp.StatusCode == 404 {
+		return OAuthToken{}, errors.New("oauth endpoint not found (404)")
+	}
+
+	// Cannot read HTTP response
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return OAuthToken{}, errors.New("cannot read HTTP response from server")
+	}
+
+	// Bad request
+	if resp.StatusCode == 400 {
+		return OAuthToken{}, parseTokenError(body)
+	}
+
+	// Success
+	return parseTokenResponse(body)
+}
 
 // tokenParams prepares HTTP form to retrieve token
 func tokenParams(j jid, password, scope, ttl string) url.Values {
