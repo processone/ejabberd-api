@@ -20,7 +20,7 @@ func TestJoinURL(t *testing.T) {
 	for _, test := range tests {
 		var got string
 		var err error
-		if got, err = JoinURL(test.baseURL, test.suffix); err != nil && test.err == nil {
+		if got, err = joinURL(test.baseURL, test.suffix); err != nil && test.err == nil {
 			t.Errorf("error on JoinURL(%q, %q): %s", test.baseURL, test.suffix, err)
 			return
 		}

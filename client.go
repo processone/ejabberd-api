@@ -112,14 +112,14 @@ func (c *Client) tokenURL() (string, error) {
 	var err error
 
 	if c.OAuthPath == "" {
-		path, err = JoinURL(c.BaseURL, "oauth")
+		path, err = joinURL(c.BaseURL, "oauth")
 	} else {
-		path, err = JoinURL(c.BaseURL, c.OAuthPath)
+		path, err = joinURL(c.BaseURL, c.OAuthPath)
 	}
 
 	if err != nil {
 		return c.BaseURL, err
 	}
 
-	return JoinURL(path, "token")
+	return joinURL(path, "token")
 }
