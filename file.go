@@ -8,10 +8,11 @@ import (
 
 // OAuthFile defines ejabberd OAuth file structure.
 type OAuthFile struct {
+	// Actual token value retrieved from server
 	AccessToken string
 	Endpoint    string
 
-	// Reminder of parameters associated with the token
+	// Parameters associated with the token, stored for reference
 	JID        string
 	Scope      string
 	Expiration time.Time

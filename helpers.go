@@ -10,9 +10,9 @@ import (
 //==============================================================================
 // Helpers for command-line tool
 
-// JoinURL checks that Base URL is a valid URL and joins base URL with
+// joinURL checks that Base URL is a valid URL and joins base URL with
 // the method suffix string.
-func JoinURL(baseURL string, suffix string) (string, error) {
+func joinURL(baseURL string, suffix string) (string, error) {
 	var u *url.URL
 	var err error
 

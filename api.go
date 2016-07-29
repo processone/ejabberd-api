@@ -51,20 +51,22 @@ func (c Client) CallRaw(req Request) ([]byte, error) {
 	return body, err
 }
 
-// Request is the common interface to all ejabberd requests.
+// Request is the common interface to all ejabberd requests. It is
+// passed to the ejabberd.Client Call methods to get parameters to
+// make the call and parse responses from the server.
 type Request interface {
 	params() (apiParams, error)
 	parseResponse([]byte) (Response, error)
 }
 
-// Response is the command interface for all ejabberd API call
-// results.
+// Response is the interface for all ejabberd API call results.
 type Response interface {
 	JSON() string
 }
 
 // apiParams gathers all values needed by the client to encode actual
-// ejabberd API call.
+// ejabberd API call. An ejabberd API commands should return apiParams
+// struct when being issued params call.
 type apiParams struct {
 	name    string
 	version int
