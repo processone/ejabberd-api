@@ -102,7 +102,7 @@ func (c Client) GetToken(sjid, password, scope string, duration time.Duration) (
 
 	// Prepare token call parameters
 	ttl := int(duration.Seconds())
-	params := tokenParams(j, password, scope, strconv.Itoa(ttl))
+	params := tokenParams(j, password, prepareScope(scope), strconv.Itoa(ttl))
 
 	// Request token from server
 	if t, err = httpGetToken(c.HTTPClient, u, params); err != nil {

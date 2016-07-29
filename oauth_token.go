@@ -122,6 +122,7 @@ func parseTokenResponse(body []byte) (OAuthToken, error) {
 
 	var t OAuthToken
 	t.AccessToken = r.AccessToken
+	t.Scope = r.Scope
 	t.Expiration = time.Now().Add(time.Duration(r.ExpiresIn) * time.Second)
 
 	return t, nil

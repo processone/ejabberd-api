@@ -2,9 +2,9 @@ package ejabberd
 
 import "strings"
 
-// PrepareScope ensures we return scopes as space separated. However,
+// prepareScope ensures we return scopes as space separated. However,
 // we accept comma separated scopes as input as well for convenience.
-func PrepareScope(s string) string {
+func prepareScope(s string) string {
 	return strings.Replace(s, ",", " ", -1)
 }
 

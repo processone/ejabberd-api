@@ -82,13 +82,11 @@ func getToken() {
 	var token ejabberd.OAuthToken
 	var err error
 	client := ejabberd.Client{BaseURL: *tokenEndpoint, OAuthPath: *tokenOauthURL}
-	scope := ejabberd.PrepareScope(*tokenScope)
-	if token, err = client.GetToken(*tokenJID, *tokenPassword, scope, *tokenTTL); err != nil {
+	if token, err = client.GetToken(*tokenJID, *tokenPassword, *tokenScope, *tokenTTL); err != nil {
 		kingpin.Fatalf("could not retrieve token: %s", err)
 	}
 
 	token.JID = *tokenJID
-	token.Scope = scope
 	token.Endpoint = *tokenEndpoint
 	if err = token.Save(*file); err != nil {
 		kingpin.Fatalf("could not save token to file %q: %s", *file, err)
