@@ -103,7 +103,7 @@ func statsCommand(c ejabberd.Client) ejabberd.Response {
 		Name: *statsName,
 	}
 
-	resp, err := c.Call(&command)
+	resp, err := c.Stats(command)
 	if err != nil {
 		kingpin.Fatalf("stats command error %q: %s", command.Name, err)
 	}

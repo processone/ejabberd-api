@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"testing"
 
-	ejabberd "github.com/processone/ejabberd-api"
+	"github.com/processone/ejabberd-api"
 )
 
 func Test_GetToken(t *testing.T) {
@@ -38,12 +38,24 @@ func Test_GetToken(t *testing.T) {
 }
 
 // TODO provide const to specify token duration
+
 func ExampleClient_GetToken() {
 	client := ejabberd.Client{BaseURL: "http://localhost:5281"}
-	token, err := client.GetToken("admin@localhost", "passw0rd", "ejabberd:admin", 3600)
-	if err != nil {
+
+	if token, err := client.GetToken("admin@localhost", "passw0rd", "ejabberd:admin", 3600); err != nil {
 		fmt.Println(err)
 	} else {
 		fmt.Println("Retrieved access token:", token.AccessToken)
+	}
+}
+
+func ExampleClient_Stats() {
+	client := ejabberd.Client{BaseURL: "http://localhost:5281", Token: "XjlJg0KF2wagT0A5dcYghePl8npsiEic"}
+	command := ejabberd.Stats{Name: "registeredusers"}
+
+	if stats, err := client.Stats(command); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(stats.Name, stats.Stat)
 	}
 }

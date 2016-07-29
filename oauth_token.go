@@ -126,25 +126,3 @@ func parseTokenResponse(body []byte) (OAuthToken, error) {
 
 	return t, nil
 }
-
-//==============================================================================
-// Helpers
-
-// tokenURL Generate URL endpoint for retrieve a token using password
-// grant type.
-func tokenURL(baseURL string, oauthPath string) (string, error) {
-	var path string
-	var err error
-
-	if oauthPath == "" {
-		path, err = joinURL(baseURL, "oauth")
-	} else {
-		path, err = joinURL(baseURL, oauthPath)
-	}
-
-	if err != nil {
-		return baseURL, err
-	}
-
-	return joinURL(path, "token")
-}

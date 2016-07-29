@@ -1,6 +1,9 @@
 package ejabberd
 
 import (
+	"bytes"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -9,13 +12,67 @@ import (
 // Client is an ejabberd client API wrapper. It is used to manage
 // ejabberd client API interactions.
 type Client struct {
-	BaseURL    string
-	OAuthPath  string
-	HTTPClient *http.Client
+	BaseURL string
+	Token   string
 
-	// TODO refactor
-	Token string
+	// Extra & Advanced features
+	OAuthPath  string
+	APIPath    string
+	HTTPClient *http.Client
 }
+
+//==============================================================================
+
+// Generic Call functions
+
+// Call performs HTTP call to ejabberd API given client parameters. It
+// returns a struct complying with Response interface.
+func (c Client) Call(req Request) (Response, error) {
+	resp, err := c.CallRaw(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return req.parseResponse(resp)
+}
+
+// CallRaw performs HTTP call to ejabberd API and returns Raw Body
+// reponse from the server as slice of bytes.
+func (c Client) CallRaw(req Request) ([]byte, error) {
+	p, err := req.params()
+	if err != nil {
+		return []byte{}, err
+	}
+
+	if c.HTTPClient == nil {
+		c.HTTPClient = &http.Client{}
+	}
+
+	var url string
+	if url, err = apiURL(c.BaseURL, c.OAuthPath, p.name); err != nil {
+		return []byte{}, err
+	}
+	r, err := http.NewRequest("POST", url, bytes.NewBuffer(p.body))
+	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
+	if p.admin {
+		r.Header.Set("X-Admin", "true")
+	}
+	r.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.HTTPClient.Do(r)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	// TODO: We should limit the amount of data the client reads from ejabberd as response
+	body, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	return body, err
+}
+
+//==============================================================================
+
+// ==== Token ====
 
 // TODO Get token from local file
 
@@ -51,4 +108,22 @@ func (c Client) GetToken(sjid, password, scope string, duration time.Duration) (
 		return t, err
 	}
 	return t, nil
+}
+
+//==============================================================================
+
+// Stats allows to query ejabberd for generic statistics. Supported statistic names are:
+//
+//     registeredusers
+//     onlineusers
+//     onlineusersnode
+//     uptimeseconds
+//     processes
+func (c Client) Stats(s Stats) (StatsResponse, error) {
+	result, err := c.Call(s)
+	if err != nil {
+		return StatsResponse{}, err
+	}
+	resp := result.(StatsResponse)
+	return resp, nil
 }

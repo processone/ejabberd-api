@@ -1,55 +1,10 @@
 package ejabberd
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"net/url"
 )
-
-// Call performs HTTP call to ejabberd API given client parameters. It
-// returns a struct complying with Response interface.
-func (c Client) Call(req Request) (Response, error) {
-	resp, err := c.CallRaw(req)
-	if err != nil {
-		return nil, err
-	}
-
-	return req.parseResponse(resp)
-}
-
-// CallRaw performs HTTP call to ejabberd API and returns Raw Body
-// reponse from the server as slice of bytes.
-func (c Client) CallRaw(req Request) ([]byte, error) {
-	p, err := req.params()
-	if err != nil {
-		return []byte{}, err
-	}
-
-	if c.HTTPClient == nil {
-		c.HTTPClient = &http.Client{}
-	}
-
-	url := c.BaseURL + p.name + "/"
-	r, err := http.NewRequest("POST", url, bytes.NewBuffer(p.body))
-	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
-	if p.admin {
-		r.Header.Set("X-Admin", "true")
-	}
-	r.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.HTTPClient.Do(r)
-	if err != nil {
-		return []byte{}, err
-	}
-
-	// TODO: We should limit the amount of data the client reads from ejabberd as response
-	body, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	return body, err
-}
 
 // Request is the common interface to all ejabberd requests. It is
 // passed to the ejabberd.Client Call methods to get parameters to
@@ -96,7 +51,7 @@ func (s StatsResponse) String() string {
 	return fmt.Sprintf("%d", s.Stat)
 }
 
-func (s *Stats) params() (apiParams, error) {
+func (s Stats) params() (apiParams, error) {
 	var query url.Values
 	if !stringInSlice(s.Name, s.knownStats()) {
 		return apiParams{}, fmt.Errorf("unknow statistic: %s", s.Name)
@@ -147,7 +102,7 @@ func (RegisterResponse) JSON() string {
 	return "TODO"
 }
 
-func (r *Register) params() (apiParams, error) {
+func (r Register) params() (apiParams, error) {
 	var query url.Values
 
 	jid, err := parseJID(r.JID)

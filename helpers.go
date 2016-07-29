@@ -1,32 +1,6 @@
 package ejabberd
 
-import (
-	"fmt"
-	"net/url"
-	"path"
-	"strings"
-)
-
-//==============================================================================
-// Helpers for command-line tool
-
-// joinURL checks that Base URL is a valid URL and joins base URL with
-// the method suffix string.
-func joinURL(baseURL string, suffix string) (string, error) {
-	var u *url.URL
-	var err error
-
-	if u, err = url.Parse(baseURL); err != nil {
-		return "", fmt.Errorf("invalid url: %s", baseURL)
-	}
-
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return "", fmt.Errorf("invalid url scheme: %s", u.Scheme)
-	}
-
-	u.Path = path.Join(u.Path, suffix)
-	return u.String(), nil
-}
+import "strings"
 
 // PrepareScope ensures we return scopes as space separated. However,
 // we accept comma separated scopes as input as well for convenience.
