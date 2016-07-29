@@ -37,10 +37,11 @@ func Test_GetToken(t *testing.T) {
 	}
 }
 
+// TODO provide const to specify token duration
 func ExampleClient_GetToken() {
 	client := ejabberd.Client{BaseURL: "http://localhost:5281"}
-	// TODO provide const to specify token duration
-	if token, err := client.GetToken("admin@localhost", "passw0rd", "ejabberd:admin", 3600); err != nil {
+	token, err := client.GetToken("admin@localhost", "passw0rd", "ejabberd:admin", 3600)
+	if err != nil {
 		fmt.Println(err)
 	} else {
 		fmt.Println("Retrieved access token:", token.AccessToken)
