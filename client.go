@@ -23,7 +23,7 @@ type Client struct {
 // valid jid and password.  We also assume that the user has the right
 // to generate a token. In case of doubt you need to check ejabberd
 // access option 'oauth_access'.
-func (c *Client) GetToken(sjid, password, scope string, duration time.Duration) (OAuthToken, error) {
+func (c Client) GetToken(sjid, password, scope string, duration time.Duration) (OAuthToken, error) {
 	var j jid
 	var t OAuthToken
 	var err error
