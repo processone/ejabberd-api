@@ -22,8 +22,8 @@ type OAuthToken struct {
 }
 
 // Save writes ejabberd OAuth structure to file.
-func (f OAuthToken) Save(file string) error {
-	b, err := json.Marshal(f)
+func (t OAuthToken) Save(file string) error {
+	b, err := json.Marshal(t)
 	if err != nil {
 		return err
 	}
@@ -98,5 +98,24 @@ func parseTokenResponse(body []byte) (OAuthToken, error) {
 	return t, nil
 }
 
-//=======
-// TODO move client tokenURL here
+//==============================================================================
+// Helpers
+
+// tokenURL Generate URL endpoint for retrieve a token using password
+// grant type.
+func tokenURL(baseURL string, oauthPath string) (string, error) {
+	var path string
+	var err error
+
+	if oauthPath == "" {
+		path, err = joinURL(baseURL, "oauth")
+	} else {
+		path, err = joinURL(baseURL, oauthPath)
+	}
+
+	if err != nil {
+		return baseURL, err
+	}
+
+	return joinURL(path, "token")
+}

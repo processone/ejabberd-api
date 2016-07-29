@@ -40,7 +40,7 @@ func (c *Client) GetToken(sjid, password, scope string, duration time.Duration) 
 	}
 
 	var u string
-	if u, err = c.tokenURL(); err != nil {
+	if u, err = tokenURL(c.BaseURL, c.OAuthPath); err != nil {
 		return t, err
 	}
 
@@ -87,24 +87,4 @@ func httpGetToken(c *http.Client, apiURL string, params url.Values) (OAuthToken,
 
 	// Success
 	return parseTokenResponse(body)
-}
-
-//==============================================================================
-// Helpers
-
-func (c *Client) tokenURL() (string, error) {
-	var path string
-	var err error
-
-	if c.OAuthPath == "" {
-		path, err = joinURL(c.BaseURL, "oauth")
-	} else {
-		path, err = joinURL(c.BaseURL, c.OAuthPath)
-	}
-
-	if err != nil {
-		return c.BaseURL, err
-	}
-
-	return joinURL(path, "token")
 }
