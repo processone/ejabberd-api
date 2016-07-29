@@ -144,20 +144,20 @@ Option `-f file` will let you point to another file.
 
 The file contains a JSON structure with the following fields:
 
-* "AccessToken": Actual token value.
-* "Endpoint": Base URL.
-* "JID": JID for which user the token was generated.
-* "Scope": OAuth scope for which the token was generated.
-* "Expiration": Expiration date for the token.
+* **access_token**: Actual token value.
+* **endpoint**: Base URL.
+* **jid**: JID for which user the token was generated.
+* **scope**: OAuth scope for which the token was generated.
+* **expiration**: Expiration date for the token.
 
 For example:
 
 ```json
-{"AccessToken":"AaQTb0PUZqeZhFKYoaTQBb4KKkCTAolE",
- "Endpoint":"http://localhost:5281/",
- "JID":"admin@localhost",
- "Scope":"ejabberd:admin",
- "Expiration":"2017-07-23T13:53:08.326421575+02:00"}
+{"access_token":"AaQTb0PUZqeZhFKYoaTQBb4KKkCTAolE",
+ "endpoint":"http://localhost:5281/",
+ "jid":"admin@localhost",
+ "scope":"ejabberd:admin",
+ "expiration":"2017-07-23T13:53:08.326421575+02:00"}
 ```
 
 ## Development
