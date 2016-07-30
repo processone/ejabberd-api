@@ -50,12 +50,13 @@ func ExampleClient_GetToken() {
 }
 
 func ExampleClient_Stats() {
-	client := ejabberd.Client{BaseURL: "http://localhost:5281", Token: "XjlJg0KF2wagT0A5dcYghePl8npsiEic"}
+	t := ejabberd.OAuthToken{AccessToken: "XjlJg0KF2wagT0A5dcYghePl8npsiEic"}
+	client := ejabberd.Client{BaseURL: "http://localhost:5281", Token: t}
 	command := ejabberd.Stats{Name: "registeredusers"}
 
 	if stats, err := client.Stats(command); err != nil {
 		fmt.Println(err)
 	} else {
-		fmt.Println(stats.Name, stats.Stat)
+		fmt.Println(stats.Name, stats.Value)
 	}
 }

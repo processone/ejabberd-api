@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"reflect"
 	"strconv"
 	"time"
 )
@@ -14,7 +15,7 @@ import (
 // ejabberd client API interactions.
 type Client struct {
 	BaseURL string
-	Token   string
+	Token   OAuthToken
 
 	// Extra & Advanced features
 	OAuthPath  string
@@ -58,8 +59,10 @@ func (c Client) CallRaw(req Request) (int, []byte, error) {
 		return 0, []byte{}, err
 	}
 	r, err := http.NewRequest("POST", url, bytes.NewBuffer(p.body))
-	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
+	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token.AccessToken))
 	if p.admin {
+		r.Header.Set("X-Admin", "true")
+	} else if needAdminForUser(req, c.Token.JID) {
 		r.Header.Set("X-Admin", "true")
 	}
 	r.Header.Set("Content-Type", "application/json")
@@ -74,6 +77,42 @@ func (c Client) CallRaw(req Request) (int, []byte, error) {
 	resp.Body.Close()
 
 	return resp.StatusCode, body, err
+}
+
+// Check if Request struct has a field call JID.
+// If this is the case, compare with the JID of the user making the
+// query, based on the token data.
+// If JID from the request and JID from the token are different, then
+// we will need admin rights to perform user query
+func needAdminForUser(command interface{}, JID string) bool {
+	cType := reflect.TypeOf(command)
+	// if a pointer to a struct is passed, get the type of the dereferenced object
+	if cType.Kind() == reflect.Ptr {
+		cType = cType.Elem()
+	}
+
+	// If command type is not a struct, we stop there
+	if cType.Kind() != reflect.Struct {
+		return false
+	}
+
+	val := reflect.ValueOf(command).Elem()
+
+	needAdmin := false
+	for i := 0; i < val.NumField(); i++ {
+		p := val.Type().Field(i)
+		v := val.Field(i)
+		if !p.Anonymous && p.Name == "JID" {
+			switch v.Kind() {
+			case reflect.String:
+				if v.String() != JID {
+					needAdmin = true
+				}
+			}
+		}
+	}
+
+	return needAdmin
 }
 
 //==============================================================================
