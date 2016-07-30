@@ -25,13 +25,18 @@ var (
 
 	// ========= stats =========
 	stats     = app.Command("stats", "Get ejabberd statistics.")
-	statsName = stats.Arg("name", "Name of stats to query.").Required().Enum("registeredusers", "onlineusers", "onlineusersnode", "uptimeseconds", "processes")
+	statsName = stats.Arg("name", "Name of stats to query.").Required().String()
 
 	// ========= user =========
 	user          = app.Command("user", "Operations to perform on users.")
 	userOperation = user.Arg("operation", "Operation").Required().Enum("register")
 	userJID       = user.Flag("jid", "JID of the user to perform operation on.").Short('j').Required().String()
 	userPassword  = user.Flag("password", "User password").Short('p').Required().String()
+
+	// ========= offline =========
+	offline          = app.Command("offline", "Operations to perform on offline store.")
+	offlineOperation = offline.Arg("operation", "Operation").Required().Enum("count")
+	offlineJID       = offline.Flag("jid", "JID of the user to perform operation on, if different from token owner").Short('j').String()
 )
 
 func main() {
@@ -58,7 +63,7 @@ func execute(command string) {
 	c := ejabberd.Client{
 		BaseURL: t.Endpoint,
 		APIPath: "api/",
-		Token:   t.AccessToken,
+		Token:   t,
 	}
 
 	var resp ejabberd.Response
@@ -67,6 +72,8 @@ func execute(command string) {
 		resp = statsCommand(c)
 	case user.FullCommand():
 		resp = userCommand(c, *userOperation)
+	case offline.FullCommand():
+		resp = offlineCommand(c, *offlineOperation)
 	}
 	format(resp)
 }
@@ -129,7 +136,32 @@ func registerCommand(c ejabberd.Client, j, p string) ejabberd.Response {
 		Password: p}
 	resp, err := c.Call(&command)
 	if err != nil {
-		kingpin.Fatalf("register command error %v: %s", command, err)
+		kingpin.Fatalf("user register command error %v: %s", command, err)
+	}
+	return resp
+}
+
+//==============================================================================
+
+func offlineCommand(c ejabberd.Client, op string) ejabberd.Response {
+	var resp ejabberd.Response
+	switch op {
+	case "count":
+		resp = offlineCountCommand(c, *offlineJID)
+	}
+	return resp
+}
+
+func offlineCountCommand(c ejabberd.Client, jid string) ejabberd.Response {
+	if jid == "" {
+		jid = c.Token.JID
+	}
+	command := ejabberd.OfflineCount{
+		JID: jid,
+	}
+	resp, err := c.Call(&command)
+	if err != nil {
+		kingpin.Fatalf("offline count command error %v: %s", command, err)
 	}
 	return resp
 }

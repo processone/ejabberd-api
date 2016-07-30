@@ -34,30 +34,47 @@ type apiParams struct {
 
 //==============================================================================
 
+// TODO: Move into a api_stats file
+
+// Wraps various ejabberd call that all returns stats
+// From ejabberd mod_admin_extra
+
 type Stats struct {
 	Name string `json:"name"`
+	Host string `json:"host,omitempty"`
 }
 
 type StatsResponse struct {
-	Name string `json:"name"`
-	Stat int    `json:"stat"`
+	Name  string `json:"name"`
+	Host  string `json:"host,omitempty"`
+	Value int    `json:"stat"`
 }
 
-func (StatsResponse) JSON() string {
-	return "TODO"
+func (s StatsResponse) JSON() string {
+	body, _ := json.Marshal(s)
+	return string(body)
 }
 
 func (s StatsResponse) String() string {
-	return fmt.Sprintf("%d", s.Stat)
+	return fmt.Sprintf("%d", s.Value)
 }
 
 func (s Stats) params() (apiParams, error) {
-	var query url.Values
-	if !stringInSlice(s.Name, s.knownStats()) {
+	switch s.Name {
+	case "":
+		return apiParams{}, fmt.Errorf("required argument 'name' not provided")
+	case "registeredusers", "onlineusers", "onlineusersnode", "uptimeseconds", "processes":
+		return s.paramsStats()
+	default:
 		return apiParams{}, fmt.Errorf("unknow statistic: %s", s.Name)
 	}
+}
+
+func (s Stats) paramsStats() (apiParams, error) {
+	var query url.Values
 
 	body, err := json.Marshal(s)
+
 	if err != nil {
 		return apiParams{}, err
 	}
@@ -77,19 +94,15 @@ func (s Stats) parseResponse(body []byte) (Response, error) {
 	var resp StatsResponse
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
-		// Cannot parse JSON response
-		return ErrorResponse{Code: 99}, err
+		return ErrorResponse{Code: 99, Message: "Cannot parse JSON response"}, err
 	}
 	resp.Name = s.Name
 	return resp, err
 }
 
-func (s Stats) knownStats() []string {
-	return []string{"registeredusers", "onlineusers", "onlineusersnode",
-		"uptimeseconds", "processes"}
-}
-
 //==============================================================================
+
+// From ejabberd_admin
 
 type Register struct {
 	JID      string `json:"jid"`
@@ -98,8 +111,9 @@ type Register struct {
 
 type RegisterResponse string
 
-func (RegisterResponse) JSON() string {
-	return "TODO"
+func (r RegisterResponse) JSON() string {
+	body, _ := json.Marshal(r)
+	return string(body)
 }
 
 func (r Register) params() (apiParams, error) {
@@ -151,6 +165,74 @@ func (r Register) parseResponse(body []byte) (Response, error) {
 
 //==============================================================================
 
+type OfflineCount struct {
+	JID string `json:"jid"`
+}
+
+type OfflineCountResponse struct {
+	Name  string `json:"name"`
+	JID   string `json:"jid"`
+	Value int    `json:"value"`
+}
+
+func (o OfflineCountResponse) JSON() string {
+	body, _ := json.Marshal(o)
+	return string(body)
+}
+
+func (o OfflineCount) params() (apiParams, error) {
+	var query url.Values
+	jid, err := parseJID(o.JID)
+	if err != nil {
+		return apiParams{}, err
+	}
+
+	type offlineCount struct {
+		User   string `json:"user"`
+		Server string `json:"server"`
+	}
+
+	data := offlineCount{
+		User:   jid.username,
+		Server: jid.domain,
+	}
+
+	body, err := json.Marshal(data)
+	if err != nil {
+		return apiParams{}, err
+	}
+
+	if err != nil {
+		return apiParams{}, err
+	}
+
+	return apiParams{
+		name:    "get_offline_count",
+		version: 1,
+
+		method: "POST",
+		query:  query,
+		body:   body,
+	}, nil
+}
+
+func (o OfflineCount) parseResponse(body []byte) (Response, error) {
+	var resp OfflineCountResponse
+	err := json.Unmarshal(body, &resp)
+	if err != nil {
+		return ErrorResponse{Code: 99, Message: "Cannot parse JSON response"}, err
+	}
+	resp.Name = "offline_count"
+	resp.JID = o.JID
+	return resp, nil
+}
+
+func (o OfflineCountResponse) String() string {
+	return fmt.Sprintf("%d", o.Value)
+}
+
+//==============================================================================
+
 type ErrorResponse struct {
 	Status  string `json:"status"`
 	Code    int    `json:"code"`
@@ -167,7 +249,8 @@ func parseError(body []byte) (ErrorResponse, error) {
 }
 
 func (e ErrorResponse) JSON() string {
-	return "TODO"
+	body, _ := json.Marshal(e)
+	return string(body)
 }
 
 func (e ErrorResponse) String() string {
