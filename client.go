@@ -29,20 +29,24 @@ type Client struct {
 // Call performs HTTP call to ejabberd API given client parameters. It
 // returns a struct complying with Response interface.
 func (c Client) Call(req Request) (Response, error) {
-	resp, err := c.CallRaw(req)
+	code, result, err := c.CallRaw(req)
 	if err != nil {
-		return nil, err
+		return ErrorResponse{Code: 99}, err
 	}
 
-	return req.parseResponse(resp)
+	if code != 200 {
+		return parseError(result)
+	}
+
+	return req.parseResponse(result)
 }
 
 // CallRaw performs HTTP call to ejabberd API and returns Raw Body
 // reponse from the server as slice of bytes.
-func (c Client) CallRaw(req Request) ([]byte, error) {
+func (c Client) CallRaw(req Request) (int, []byte, error) {
 	p, err := req.params()
 	if err != nil {
-		return []byte{}, err
+		return 0, []byte{}, err
 	}
 
 	if c.HTTPClient == nil {
@@ -51,7 +55,7 @@ func (c Client) CallRaw(req Request) ([]byte, error) {
 
 	var url string
 	if url, err = apiURL(c.BaseURL, c.OAuthPath, p.name); err != nil {
-		return []byte{}, err
+		return 0, []byte{}, err
 	}
 	r, err := http.NewRequest("POST", url, bytes.NewBuffer(p.body))
 	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
@@ -62,13 +66,14 @@ func (c Client) CallRaw(req Request) ([]byte, error) {
 
 	resp, err := c.HTTPClient.Do(r)
 	if err != nil {
-		return []byte{}, err
+		return 0, []byte{}, err
 	}
 
 	// TODO: We should limit the amount of data the client reads from ejabberd as response
 	body, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
-	return body, err
+
+	return resp.StatusCode, body, err
 }
 
 //==============================================================================

@@ -144,8 +144,7 @@ func (r Register) parseResponse(body []byte) (Response, error) {
 	var resp RegisterResponse
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
-		// Cannot parse JSON response
-		return ErrorResponse{Code: 99}, err
+		return ErrorResponse{Code: 99, Message: "Cannot parse JSON response"}, err
 	}
 	return resp, nil
 }
@@ -153,8 +152,18 @@ func (r Register) parseResponse(body []byte) (Response, error) {
 //==============================================================================
 
 type ErrorResponse struct {
-	Code        int
-	Description string
+	Status  string `json:"status"`
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
+func parseError(body []byte) (ErrorResponse, error) {
+	var resp ErrorResponse
+	err := json.Unmarshal(body, &resp)
+	if err != nil {
+		return ErrorResponse{Code: 99, Message: "Cannot parse JSON response"}, err
+	}
+	return resp, nil
 }
 
 func (e ErrorResponse) JSON() string {
@@ -162,5 +171,5 @@ func (e ErrorResponse) JSON() string {
 }
 
 func (e ErrorResponse) String() string {
-	return fmt.Sprintf("Error %d: %s", e.Code, e.Description)
+	return fmt.Sprintf("Error %d: %s", e.Code, e.Message)
 }

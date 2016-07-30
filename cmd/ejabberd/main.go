@@ -123,7 +123,7 @@ func userCommand(c ejabberd.Client, op string) ejabberd.Response {
 }
 
 func registerCommand(c ejabberd.Client, j, p string) ejabberd.Response {
-	// TODO Should we create a v2 command with only two parameters (JID, Password)
+	// TODO Should we create a v2 command in ejabberd with only two parameters (JID, Password)
 	command := ejabberd.Register{
 		JID:      j,
 		Password: p}
