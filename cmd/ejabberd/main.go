@@ -107,13 +107,9 @@ func getToken() {
 //==============================================================================
 
 func statsCommand(c ejabberd.Client) ejabberd.Response {
-	command := ejabberd.Stats{
-		Name: *statsName,
-	}
-
-	resp, err := c.Stats(command)
+	resp, err := c.Stats(*statsName)
 	if err != nil {
-		kingpin.Fatalf("stats command error %q: %s", command.Name, err)
+		kingpin.Fatalf("stats error %q: %s", *statsName, err)
 	}
 	return resp
 }
@@ -130,13 +126,9 @@ func userCommand(c ejabberd.Client, op string) ejabberd.Response {
 }
 
 func registerCommand(c ejabberd.Client, j, p string) ejabberd.Response {
-	// TODO Should we create a v2 command in ejabberd with only two parameters (JID, Password)
-	command := ejabberd.Register{
-		JID:      j,
-		Password: p}
-	resp, err := c.Call(&command)
+	resp, err := c.RegisterUser(j, p)
 	if err != nil {
-		kingpin.Fatalf("user register command error %v: %s", command, err)
+		kingpin.Fatalf("user register error for %s: %s", j, err)
 	}
 	return resp
 }
@@ -156,14 +148,9 @@ func offlineCountCommand(c ejabberd.Client, jid string) ejabberd.Response {
 	if jid == "" {
 		jid = c.Token.JID
 	}
-	command := ejabberd.OfflineCount{
-		JID: jid,
-	}
-	resp, err := c.Call(&command)
+	resp, err := c.GetOfflineCount(jid)
 	if err != nil {
-		kingpin.Fatalf("offline count command error %v: %s", command, err)
+		kingpin.Fatalf("offline count error for %s: %s", jid, err)
 	}
 	return resp
 }
-
-// TODO Interface for command result formatting

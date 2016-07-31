@@ -27,12 +27,12 @@ type Client struct {
 
 // Generic Call functions
 
-// Call performs HTTP call to ejabberd API given client parameters. It
+// call performs HTTP call to ejabberd API given client parameters. It
 // returns a struct complying with Response interface.
-func (c Client) Call(req Request) (Response, error) {
-	code, result, err := c.CallRaw(req)
+func (c Client) call(req request) (Response, error) {
+	code, result, err := c.callRaw(req)
 	if err != nil {
-		return ErrorResponse{Code: 99}, err
+		return Error{Code: 99}, err
 	}
 
 	if code != 200 {
@@ -42,9 +42,9 @@ func (c Client) Call(req Request) (Response, error) {
 	return req.parseResponse(result)
 }
 
-// CallRaw performs HTTP call to ejabberd API and returns Raw Body
+// callRaw performs HTTP call to ejabberd API and returns Raw Body
 // reponse from the server as slice of bytes.
-func (c Client) CallRaw(req Request) (int, []byte, error) {
+func (c Client) callRaw(req request) (int, []byte, error) {
 	p, err := req.params()
 	if err != nil {
 		return 0, []byte{}, err
@@ -164,18 +164,62 @@ func (c Client) GetToken(sjid, password, scope string, duration time.Duration) (
 //     onlineusersnode
 //     uptimeseconds
 //     processes
-func (c Client) Stats(s Stats) (StatsResponse, error) {
-	result, err := c.Call(s)
-	if err != nil {
-		return StatsResponse{}, err
+func (c Client) Stats(name string) (Stats, error) {
+	command := statsRequest{
+		Name: name,
 	}
-	resp := result.(StatsResponse)
+
+	result, err := c.call(command)
+	if err != nil {
+		return Stats{}, err
+	}
+	resp := result.(Stats)
 	return resp, nil
 }
 
 //==============================================================================
 
-// Pass default timeout
+// RegisterUser creates a new user on a domain, from id (JID) and
+// password. It will fail if domain is not handle by server, if user
+// already exists, or if the user performing the registration does not
+// have the right to create new users on the server or domain.
+func (c Client) RegisterUser(bareJID string, password string) (Register, error) {
+	command := registerRequest{
+		JID:      bareJID,
+		Password: password}
+
+	result, err := c.call(command)
+	if err != nil {
+		return "", err
+	}
+	resp := result.(Register)
+	return resp, nil
+}
+
+//==============================================================================
+
+// GetOfflineCount returns the number of message in offline storage
+// for a given user. It can be called as a user, if you try to read
+// your own offline message count. It can also be called as an admin
+// and in that case, you can read offline message count from any user
+// on the server.
+func (c Client) GetOfflineCount(bareJID string) (OfflineCount, error) {
+	command := offlineCountRequest{
+		JID: bareJID,
+	}
+
+	result, err := c.call(command)
+	if err != nil {
+		return OfflineCount{}, err
+	}
+	resp := result.(OfflineCount)
+	return resp, nil
+}
+
+//==============================================================================
+
+// Prepare HTTP client settings with proper values, like default
+// timeout.
 func defaultHTTPClient(timeout time.Duration) *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{

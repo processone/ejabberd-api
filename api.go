@@ -6,17 +6,17 @@ import (
 	"net/url"
 )
 
-// Request is the common interface to all ejabberd requests. It is
-// passed to the ejabberd.Client Call methods to get parameters to
-// make the call and parse responses from the server.
-type Request interface {
-	params() (apiParams, error)
-	parseResponse([]byte) (Response, error)
-}
-
-// Response is the interface for all ejabberd API call results.
+// Response is the common interface for all ejabberd API call results.
 type Response interface {
 	JSON() string
+}
+
+// request is the common interface to all ejabberd requests. It is
+// passed to the ejabberd.Client Call methods to get parameters to
+// make the call and parse responses from the server.
+type request interface {
+	params() (apiParams, error)
+	parseResponse([]byte) (Response, error)
 }
 
 // apiParams gathers all values needed by the client to encode actual
@@ -25,7 +25,7 @@ type Response interface {
 type apiParams struct {
 	name    string
 	version int
-	admin   bool // Does API require admin header ?
+	admin   bool // = Flag to mark if API requires admin header
 
 	method string
 	query  url.Values
@@ -39,27 +39,28 @@ type apiParams struct {
 // Wraps various ejabberd call that all returns stats
 // From ejabberd mod_admin_extra
 
+// Stats is the data structure returned by ejabberd Stats API call.
 type Stats struct {
-	Name string `json:"name"`
-	Host string `json:"host,omitempty"`
-}
-
-type StatsResponse struct {
 	Name  string `json:"name"`
-	Host  string `json:"host,omitempty"`
 	Value int    `json:"stat"`
 }
 
-func (s StatsResponse) JSON() string {
+// JSON converts Stats data structure to JSON string.
+func (s Stats) JSON() string {
 	body, _ := json.Marshal(s)
 	return string(body)
 }
 
-func (s StatsResponse) String() string {
+// String represents Stats data structure as a human readable value.
+func (s Stats) String() string {
 	return fmt.Sprintf("%d", s.Value)
 }
 
-func (s Stats) params() (apiParams, error) {
+type statsRequest struct {
+	Name string `json:"name"`
+}
+
+func (s statsRequest) params() (apiParams, error) {
 	switch s.Name {
 	case "":
 		return apiParams{}, fmt.Errorf("required argument 'name' not provided")
@@ -70,7 +71,7 @@ func (s Stats) params() (apiParams, error) {
 	}
 }
 
-func (s Stats) paramsStats() (apiParams, error) {
+func (s statsRequest) paramsStats() (apiParams, error) {
 	var query url.Values
 
 	body, err := json.Marshal(s)
@@ -90,11 +91,11 @@ func (s Stats) paramsStats() (apiParams, error) {
 	}, nil
 }
 
-func (s Stats) parseResponse(body []byte) (Response, error) {
-	var resp StatsResponse
+func (s statsRequest) parseResponse(body []byte) (Response, error) {
+	var resp Stats
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
-		return ErrorResponse{Code: 99, Message: "Cannot parse JSON response"}, err
+		return Error{Code: 99, Message: "Cannot parse JSON response"}, err
 	}
 	resp.Name = s.Name
 	return resp, err
@@ -104,19 +105,23 @@ func (s Stats) parseResponse(body []byte) (Response, error) {
 
 // From ejabberd_admin
 
-type Register struct {
-	JID      string `json:"jid"`
-	Password string `json:"password"`
-}
+// Register contains the message return by server after successful
+// user registration.
+type Register string
 
-type RegisterResponse string
-
-func (r RegisterResponse) JSON() string {
+// JSON represents Register result as a JSON string. Can be useful for
+// further processing.
+func (r Register) JSON() string {
 	body, _ := json.Marshal(r)
 	return string(body)
 }
 
-func (r Register) params() (apiParams, error) {
+type registerRequest struct {
+	JID      string `json:"jid"`
+	Password string `json:"password"`
+}
+
+func (r registerRequest) params() (apiParams, error) {
 	var query url.Values
 
 	jid, err := parseJID(r.JID)
@@ -154,33 +159,37 @@ func (r Register) params() (apiParams, error) {
 	}, nil
 }
 
-func (r Register) parseResponse(body []byte) (Response, error) {
-	var resp RegisterResponse
+func (r registerRequest) parseResponse(body []byte) (Response, error) {
+	var resp Register
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
-		return ErrorResponse{Code: 99, Message: "Cannot parse JSON response"}, err
+		return Error{Code: 99, Message: "Cannot parse JSON response"}, err
 	}
 	return resp, nil
 }
 
 //==============================================================================
 
+// OfflineCount contains the result of the call to ejabberd
+// get_offline_count API.
 type OfflineCount struct {
-	JID string `json:"jid"`
-}
-
-type OfflineCountResponse struct {
 	Name  string `json:"name"`
 	JID   string `json:"jid"`
 	Value int    `json:"value"`
 }
 
-func (o OfflineCountResponse) JSON() string {
+// JSON represents OfflineCount as a JSON string, for further
+// processing with other tools.
+func (o OfflineCount) JSON() string {
 	body, _ := json.Marshal(o)
 	return string(body)
 }
 
-func (o OfflineCount) params() (apiParams, error) {
+type offlineCountRequest struct {
+	JID string `json:"jid"`
+}
+
+func (o offlineCountRequest) params() (apiParams, error) {
 	var query url.Values
 	jid, err := parseJID(o.JID)
 	if err != nil {
@@ -216,43 +225,47 @@ func (o OfflineCount) params() (apiParams, error) {
 	}, nil
 }
 
-func (o OfflineCount) parseResponse(body []byte) (Response, error) {
-	var resp OfflineCountResponse
+func (o offlineCountRequest) parseResponse(body []byte) (Response, error) {
+	var resp OfflineCount
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
-		return ErrorResponse{Code: 99, Message: "Cannot parse JSON response"}, err
+		return Error{Code: 99, Message: "Cannot parse JSON response"}, err
 	}
 	resp.Name = "offline_count"
 	resp.JID = o.JID
 	return resp, nil
 }
 
-func (o OfflineCountResponse) String() string {
+func (o OfflineCount) String() string {
 	return fmt.Sprintf("%d", o.Value)
 }
 
 //==============================================================================
 
-type ErrorResponse struct {
+// Error represents ejabberd error returned by the server as result of
+// ejabberd API calls.
+type Error struct {
 	Status  string `json:"status"`
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
 
-func parseError(body []byte) (ErrorResponse, error) {
-	var resp ErrorResponse
+func parseError(body []byte) (Error, error) {
+	var resp Error
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
-		return ErrorResponse{Code: 99, Message: "Cannot parse JSON response"}, err
+		return Error{Code: 99, Message: "Cannot parse JSON response"}, err
 	}
 	return resp, nil
 }
 
-func (e ErrorResponse) JSON() string {
+// JSON represents ejabberd error response as a JSON string, for further
+// processing with other tools.
+func (e Error) JSON() string {
 	body, _ := json.Marshal(e)
 	return string(body)
 }
 
-func (e ErrorResponse) String() string {
+func (e Error) String() string {
 	return fmt.Sprintf("Error %d: %s", e.Code, e.Message)
 }
