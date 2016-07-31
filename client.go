@@ -96,7 +96,7 @@ func needAdminForUser(command interface{}, JID string) bool {
 		return false
 	}
 
-	val := reflect.ValueOf(command).Elem()
+	val := reflect.ValueOf(command)
 
 	needAdmin := false
 	for i := 0; i < val.NumField(); i++ {
