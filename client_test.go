@@ -65,6 +65,4 @@ func ExampleClient_Stats() {
 	} else {
 		fmt.Println(stats.Name, stats.Value)
 	}
-	// Output:
-	// 1
 }
