@@ -32,11 +32,15 @@ type Client struct {
 func (c Client) call(req request) (Response, error) {
 	code, result, err := c.callRaw(req)
 	if err != nil {
-		return Error{Code: 99}, err
+		return APIError{Code: 99}, err
 	}
 
 	if code != 200 {
-		return parseError(result)
+		apiError, err := parseError(result)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apiError
 	}
 
 	return req.parseResponse(result)
@@ -63,6 +67,7 @@ func (c Client) callRaw(req request) (int, []byte, error) {
 	if p.admin {
 		r.Header.Set("X-Admin", "true")
 	} else if needAdminForUser(req, c.Token.JID) {
+		fmt.Println("MREMOND Set admin")
 		r.Header.Set("X-Admin", "true")
 	}
 	r.Header.Set("Content-Type", "application/json")
@@ -213,6 +218,26 @@ func (c Client) GetOfflineCount(bareJID string) (OfflineCount, error) {
 		return OfflineCount{}, err
 	}
 	resp := result.(OfflineCount)
+	return resp, nil
+}
+
+//==============================================================================
+
+// UserResources returns the list of resources connected for a given
+// user. It can be called as a user, if you try to read your own
+// connected resources. It can also be called as an admin and in that
+// case, you can read the connected resources for any any user on the
+// server.
+func (c Client) UserResources(bareJID string) (UserResources, error) {
+	command := userResourcesRequest{
+		JID: bareJID,
+	}
+
+	result, err := c.call(command)
+	if err != nil {
+		return UserResources{}, err
+	}
+	resp := result.(UserResources)
 	return resp, nil
 }
 

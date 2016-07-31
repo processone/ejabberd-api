@@ -27,11 +27,15 @@ var (
 	stats     = app.Command("stats", "Get ejabberd statistics.")
 	statsName = stats.Arg("name", "Name of stats to query.").Required().String()
 
+	// ========= admin =========
+	register         = app.Command("register", "Create a new user.")
+	registerJID      = register.Flag("jid", "JID of the user to create.").Short('j').Required().String()
+	registerPassword = register.Flag("password", "Password to set for created user.").Short('p').Required().String()
+
 	// ========= user =========
 	user          = app.Command("user", "Operations to perform on users.")
-	userOperation = user.Arg("operation", "Operation").Required().Enum("register")
-	userJID       = user.Flag("jid", "JID of the user to perform operation on.").Short('j').Required().String()
-	userPassword  = user.Flag("password", "User password").Short('p').Required().String()
+	userOperation = user.Arg("operation", "Operation").Required().Enum("resources")
+	userJID       = user.Flag("jid", "JID of the user to perform operation on.").Short('j').String()
 
 	// ========= offline =========
 	offline          = app.Command("offline", "Operations to perform on offline store.")
@@ -68,6 +72,8 @@ func execute(command string) {
 
 	var resp ejabberd.Response
 	switch command {
+	case register.FullCommand():
+		resp = registerCommand(c, *registerJID, *registerPassword)
 	case stats.FullCommand():
 		resp = statsCommand(c)
 	case user.FullCommand():
@@ -106,6 +112,16 @@ func getToken() {
 
 //==============================================================================
 
+func registerCommand(c ejabberd.Client, j, p string) ejabberd.Response {
+	resp, err := c.RegisterUser(j, p)
+	if err != nil {
+		kingpin.Fatalf("user registration error for %s: %s", j, err)
+	}
+	return resp
+}
+
+//==============================================================================
+
 func statsCommand(c ejabberd.Client) ejabberd.Response {
 	resp, err := c.Stats(*statsName)
 	if err != nil {
@@ -119,16 +135,20 @@ func statsCommand(c ejabberd.Client) ejabberd.Response {
 func userCommand(c ejabberd.Client, op string) ejabberd.Response {
 	var resp ejabberd.Response
 	switch op {
-	case "register":
-		resp = registerCommand(c, *userJID, *userPassword)
+	case "resources":
+		resp = resourcesCommand(c, *userJID)
 	}
 	return resp
 }
 
-func registerCommand(c ejabberd.Client, j, p string) ejabberd.Response {
-	resp, err := c.RegisterUser(j, p)
+func resourcesCommand(c ejabberd.Client, jid string) ejabberd.Response {
+	if jid == "" {
+		jid = c.Token.JID
+	}
+
+	resp, err := c.UserResources(jid)
 	if err != nil {
-		kingpin.Fatalf("user register error for %s: %s", j, err)
+		kingpin.Fatalf("%s: %s", jid, err)
 	}
 	return resp
 }

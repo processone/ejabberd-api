@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strings"
 )
 
 // Response is the common interface for all ejabberd API call results.
@@ -95,7 +96,7 @@ func (s statsRequest) parseResponse(body []byte) (Response, error) {
 	var resp Stats
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
-		return Error{Code: 99, Message: "Cannot parse JSON response"}, err
+		return resp, APIError{Code: 99, Message: err.Error()}
 	}
 	resp.Name = s.Name
 	return resp, err
@@ -163,7 +164,7 @@ func (r registerRequest) parseResponse(body []byte) (Response, error) {
 	var resp Register
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
-		return Error{Code: 99, Message: "Cannot parse JSON response"}, err
+		return resp, APIError{Code: 99, Message: err.Error()}
 	}
 	return resp, nil
 }
@@ -229,7 +230,7 @@ func (o offlineCountRequest) parseResponse(body []byte) (Response, error) {
 	var resp OfflineCount
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
-		return Error{Code: 99, Message: "Cannot parse JSON response"}, err
+		return resp, APIError{Code: 99, Message: err.Error()}
 	}
 	resp.Name = "offline_count"
 	resp.JID = o.JID
@@ -242,30 +243,104 @@ func (o OfflineCount) String() string {
 
 //==============================================================================
 
-// Error represents ejabberd error returned by the server as result of
-// ejabberd API calls.
-type Error struct {
+// UserResources contains the result of the call to ejabberd
+// user_resources API.
+type UserResources struct {
+	JID       string   `json:"jid"`
+	Resources []string `json:"resources"`
+}
+
+// JSON represents UserResources as a JSON string, for further
+// processing with other tools.
+func (u UserResources) JSON() string {
+	body, _ := json.Marshal(u)
+	return string(body)
+}
+
+type userResourcesRequest struct {
+	JID string `json:"jid"`
+}
+
+func (u userResourcesRequest) params() (apiParams, error) {
+	var query url.Values
+	jid, err := parseJID(u.JID)
+	if err != nil {
+		return apiParams{}, err
+	}
+
+	type userResources struct {
+		User   string `json:"user"`
+		Server string `json:"server"`
+	}
+
+	data := userResources{
+		User:   jid.username,
+		Server: jid.domain,
+	}
+
+	body, err := json.Marshal(data)
+	if err != nil {
+		return apiParams{}, err
+	}
+
+	if err != nil {
+		return apiParams{}, err
+	}
+
+	return apiParams{
+		name:    "user_resources",
+		version: 1,
+
+		method: "POST",
+		query:  query,
+		body:   body,
+	}, nil
+}
+
+func (u userResourcesRequest) parseResponse(body []byte) (Response, error) {
+	var resp UserResources
+
+	var data []string
+	err := json.Unmarshal(body, &data)
+	if err != nil {
+		return resp, APIError{Code: 99, Message: err.Error()}
+	}
+	resp.JID = u.JID
+	resp.Resources = data
+	return resp, nil
+}
+
+func (u UserResources) String() string {
+	resources := strings.Join(u.Resources, ",")
+	return fmt.Sprintf("%s", resources)
+}
+
+//==============================================================================
+
+// APIError represents ejabberd error returned by the server as result
+// of ejabberd API calls.
+type APIError struct {
 	Status  string `json:"status"`
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
 
-func parseError(body []byte) (Error, error) {
-	var resp Error
+func parseError(body []byte) (APIError, error) {
+	var resp APIError
 	err := json.Unmarshal(body, &resp)
 	if err != nil {
-		return Error{Code: 99, Message: "Cannot parse JSON response"}, err
+		return resp, APIError{Code: 99, Message: err.Error()}
 	}
 	return resp, nil
 }
 
 // JSON represents ejabberd error response as a JSON string, for further
 // processing with other tools.
-func (e Error) JSON() string {
+func (e APIError) JSON() string {
 	body, _ := json.Marshal(e)
 	return string(body)
 }
 
-func (e Error) String() string {
+func (e APIError) Error() string {
 	return fmt.Sprintf("Error %d: %s", e.Code, e.Message)
 }

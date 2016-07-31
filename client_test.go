@@ -1,6 +1,7 @@
 package ejabberd_test
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -50,6 +51,12 @@ func ExampleClient_GetToken() {
 }
 
 func ExampleClient_Stats() {
+	if flag.Lookup("test.v") == nil {
+		fmt.Println("normal run")
+	} else {
+		fmt.Println("run under go test")
+	}
+
 	t := ejabberd.OAuthToken{AccessToken: "XjlJg0KF2wagT0A5dcYghePl8npsiEic"}
 	client := ejabberd.Client{BaseURL: "http://localhost:5281", Token: t}
 
@@ -58,4 +65,6 @@ func ExampleClient_Stats() {
 	} else {
 		fmt.Println(stats.Name, stats.Value)
 	}
+	// Output:
+	// 1
 }
