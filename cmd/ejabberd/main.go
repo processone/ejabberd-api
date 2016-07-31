@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/processone/ejabberd-api"
@@ -41,6 +42,13 @@ var (
 	offline          = app.Command("offline", "Operations to perform on offline store.")
 	offlineOperation = offline.Arg("operation", "Operation").Required().Enum("count")
 	offlineJID       = offline.Flag("jid", "JID of the user to perform operation on, if different from token owner").Short('j').String()
+
+	// ========= generic call =========
+	call      = app.Command("command", "Call a command on ejabberd server, using your token credentials.")
+	callFile  = call.Flag("data-file", "File with JSON data to send to ejabberd. You can also use /dev/stdin").String()
+	callData  = call.Flag("data", "File with JSON data to send to ejabberd. Omit to read from STDIN").String()
+	callName  = call.Flag("name", "Name of command on server").Short('n').Required().String()
+	callAdmin = call.Flag("admin", "Call as admin").Short('a').Bool()
 )
 
 func main() {
@@ -70,18 +78,19 @@ func execute(command string) {
 		Token:   t,
 	}
 
-	var resp ejabberd.Response
 	switch command {
+	case call.FullCommand():
+		genericCommand(c, *callName, *callData, *callFile, *callAdmin)
 	case register.FullCommand():
-		resp = registerCommand(c, *registerJID, *registerPassword)
+		registerCommand(c, *registerJID, *registerPassword)
 	case stats.FullCommand():
-		resp = statsCommand(c)
+		statsCommand(c)
 	case user.FullCommand():
-		resp = userCommand(c, *userOperation)
+		userCommand(c, *userOperation)
 	case offline.FullCommand():
-		resp = offlineCommand(c, *offlineOperation)
+		offlineCommand(c, *offlineOperation)
 	}
-	format(resp)
+
 }
 
 func format(resp ejabberd.Response) {
@@ -112,36 +121,34 @@ func getToken() {
 
 //==============================================================================
 
-func registerCommand(c ejabberd.Client, j, p string) ejabberd.Response {
+func registerCommand(c ejabberd.Client, j, p string) {
 	resp, err := c.RegisterUser(j, p)
 	if err != nil {
 		kingpin.Fatalf("user registration error for %s: %s", j, err)
 	}
-	return resp
+	format(resp)
 }
 
 //==============================================================================
 
-func statsCommand(c ejabberd.Client) ejabberd.Response {
+func statsCommand(c ejabberd.Client) {
 	resp, err := c.Stats(*statsName)
 	if err != nil {
 		kingpin.Fatalf("stats error %q: %s", *statsName, err)
 	}
-	return resp
+	format(resp)
 }
 
 //==============================================================================
 
-func userCommand(c ejabberd.Client, op string) ejabberd.Response {
-	var resp ejabberd.Response
+func userCommand(c ejabberd.Client, op string) {
 	switch op {
 	case "resources":
-		resp = resourcesCommand(c, *userJID)
+		resourcesCommand(c, *userJID)
 	}
-	return resp
 }
 
-func resourcesCommand(c ejabberd.Client, jid string) ejabberd.Response {
+func resourcesCommand(c ejabberd.Client, jid string) {
 	if jid == "" {
 		jid = c.Token.JID
 	}
@@ -150,21 +157,19 @@ func resourcesCommand(c ejabberd.Client, jid string) ejabberd.Response {
 	if err != nil {
 		kingpin.Fatalf("%s: %s", jid, err)
 	}
-	return resp
+	format(resp)
 }
 
 //==============================================================================
 
-func offlineCommand(c ejabberd.Client, op string) ejabberd.Response {
-	var resp ejabberd.Response
+func offlineCommand(c ejabberd.Client, op string) {
 	switch op {
 	case "count":
-		resp = offlineCountCommand(c, *offlineJID)
+		offlineCountCommand(c, *offlineJID)
 	}
-	return resp
 }
 
-func offlineCountCommand(c ejabberd.Client, jid string) ejabberd.Response {
+func offlineCountCommand(c ejabberd.Client, jid string) {
 	if jid == "" {
 		jid = c.Token.JID
 	}
@@ -172,5 +177,43 @@ func offlineCountCommand(c ejabberd.Client, jid string) ejabberd.Response {
 	if err != nil {
 		kingpin.Fatalf("offline count error for %s: %s", jid, err)
 	}
-	return resp
+	format(resp)
+}
+
+//==============================================================================
+
+func genericCommand(c ejabberd.Client, commandName, input string, file string, admin bool) {
+	var data []byte
+	var err error
+
+	if file != "" && input != "" {
+		kingpin.Fatalf("Use either data or data-file option to pass input to ejabberd API.")
+	}
+
+	if input != "" {
+		data = []byte(input)
+	} else {
+		switch file {
+		case "/dev/stdin":
+			data, err = ioutil.ReadAll(os.Stdin)
+		case "":
+			// Some valid ejabberd commands accept empty input
+		default:
+			data, err = ioutil.ReadFile(file)
+		}
+	}
+
+	if err != nil {
+		kingpin.Fatalf("%s", err)
+	}
+
+	code, result, err := c.CallRaw(data, commandName, admin)
+	if err != nil {
+		kingpin.Fatalf("%s", err)
+	}
+	if code != 200 {
+		fmt.Printf("Response: %d\n", code)
+		kingpin.Fatalf("%s", result)
+	}
+	fmt.Printf("%s", result)
 }

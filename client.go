@@ -30,7 +30,19 @@ type Client struct {
 // call performs HTTP call to ejabberd API given client parameters. It
 // returns a struct complying with Response interface.
 func (c Client) call(req request) (Response, error) {
-	code, result, err := c.callRaw(req)
+	p, err := req.params()
+	if err != nil {
+		return nil, err
+	}
+
+	var admin bool
+	if p.admin {
+		admin = true
+	} else if needAdminForUser(req, c.Token.JID) {
+		admin = true
+	}
+
+	code, result, err := c.CallRaw(p.body, p.name, admin)
 	if err != nil {
 		return APIError{Code: 99}, err
 	}
@@ -46,31 +58,28 @@ func (c Client) call(req request) (Response, error) {
 	return req.parseResponse(result)
 }
 
-// callRaw performs HTTP call to ejabberd API and returns Raw Body
+// CallRaw performs HTTP call to ejabberd API and returns Raw Body
 // reponse from the server as slice of bytes.
-func (c Client) callRaw(req request) (int, []byte, error) {
-	p, err := req.params()
-	if err != nil {
-		return 0, []byte{}, err
-	}
-
+func (c Client) CallRaw(body []byte, name string, admin bool) (code int, result []byte, err error) {
 	if c.HTTPClient == nil {
 		c.HTTPClient = defaultHTTPClient(15 * time.Second)
 	}
 
 	var url string
-	if url, err = apiURL(c.BaseURL, c.OAuthPath, p.name); err != nil {
+	if url, err = apiURL(c.BaseURL, c.APIPath, name); err != nil {
 		return 0, []byte{}, err
 	}
-	r, err := http.NewRequest("POST", url, bytes.NewBuffer(p.body))
+	var r *http.Request
+	if len(body) == 0 {
+		r, _ = http.NewRequest("GET", url, nil)
+	} else {
+		r, _ = http.NewRequest("POST", url, bytes.NewBuffer(body))
+	}
 	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token.AccessToken))
-	if p.admin {
-		r.Header.Set("X-Admin", "true")
-	} else if needAdminForUser(req, c.Token.JID) {
-		fmt.Println("MREMOND Set admin")
+	r.Header.Set("Content-Type", "application/json")
+	if admin {
 		r.Header.Set("X-Admin", "true")
 	}
-	r.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.HTTPClient.Do(r)
 	if err != nil {
@@ -78,10 +87,10 @@ func (c Client) callRaw(req request) (int, []byte, error) {
 	}
 
 	// TODO: We should limit the amount of data the client reads from ejabberd as response
-	body, err := ioutil.ReadAll(resp.Body)
+	result, err = ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 
-	return resp.StatusCode, body, err
+	return resp.StatusCode, result, err
 }
 
 // Check if Request struct has a field call JID.
