@@ -21,7 +21,14 @@ If you have go installed in your environment you can install
 `ejabberd` command-line tool with:
 
 ```bash
-go get -u github.com/processone/ejabberd-api
+go get -v github.com/processone/ejabberd-api/cmd/ejabberd
+```
+Once the get completes, you should find your new ejabberd (or ejabberd.exe) executable sitting inside $GOPATH/bin/.
+
+To update ejabberd API’s dependencies, use go get with the -u option.
+
+```bash
+go get -v -u github.com/processone/ejabberd-api/cmd/ejabberd
 ```
 
 ## Configuring ejabberd OAuth API
