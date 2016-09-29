@@ -90,24 +90,33 @@ the user will be allowed to call.
 
 1. Generating an OAuth token:
 
-To use ejabberd command-line tool, you first need to generate an OAuth
-token.
+   To use ejabberd command-line tool, you first need to generate an OAuth
+   token.
 
-It can be done, for example, with the following command:
+   It can be done, for example, with the following command:
 
-```bash
-ejabberd token -j admin@localhost -p mypassword -s ejabberd:admin
-```
+   ```bash
+   ejabberd token -j admin@localhost -p mypassword -s ejabberd:admin
+   ```
 
-This will generate a `.ejabberd-oauth.json` file containing your
-credentials. Keep the file secret, as it will grant access to command
-available in the requested scope on your behalf.
+   This will generate a `.ejabberd-oauth.json` file containing your
+   credentials. Keep the file secret, as it will grant access to command
+   available in the requested scope on your behalf.
 
 2. Calling ejabberd API from the command-line, using your token file. For example:
 
-```bash
-ejabberd stats registeredusers
-```
+   ```bash
+   ejabberd stats registeredusers
+   ```
+
+3. You can also try to call any availale command thanks to the generic `call` command. Do not forget `-a` parameter for commands that requires admin rights. For example:
+
+   ```bash
+   cat unregister.json 
+   {"user":"test1", "host":"localhost"}
+   
+   ejabberd call --name unregister -a --data-file=unregister.json
+   ```
 
 ### Generating Bash/ZSH completion
 
@@ -168,6 +177,12 @@ For example:
 ```
 
 ## Development
+
+### Local build
+
+```bash
+go build -o ejabberd cmd/ejabberd/main.go
+```
 
 ### Running tests
 
