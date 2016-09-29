@@ -44,7 +44,7 @@ var (
 	offlineJID       = offline.Flag("jid", "JID of the user to perform operation on, if different from token owner").Short('j').String()
 
 	// ========= generic call =========
-	call      = app.Command("command", "Call a command on ejabberd server, using your token credentials.")
+	call      = app.Command("call", "Call a command on ejabberd server, using your token credentials.")
 	callFile  = call.Flag("data-file", "File with JSON data to send to ejabberd. You can also use /dev/stdin").String()
 	callData  = call.Flag("data", "File with JSON data to send to ejabberd. Omit to read from STDIN").String()
 	callName  = call.Flag("name", "Name of command on server").Short('n').Required().String()
