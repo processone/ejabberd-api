@@ -35,7 +35,7 @@ go get -v -u github.com/processone/ejabberd-api/cmd/ejabberd
 
 Before being able to interact with ejabberd API, you need to configure
 ejabberd with OAuth support enabled. This is is documented in
-[ejabberd OAuth support](https://docs.ejabberd.im/admin/guide/oauth/).
+[ejabberd OAuth support](https://docs.ejabberd.im/developer/ejabberd-api/oauth/).
 
 Here are example entries to check / change in your ejabberd
 configuration file:
@@ -58,15 +58,22 @@ configuration file:
    ```
 
 2. You can then configure the OAuth commands you want to expose. Check
-   `commands_admin_access` to make sure ACL for passing commands as
+   `api_permissions` to make sure ACL for passing commands as
    admins are set properly:
 
    ```yaml
-   commands_admin_access:
-     - allow:
-       - user: "admin@localhost"
-   commands:
-     - add_commands: [user, admin, open]
+   api_permissions:
+     "admin access":
+       who:
+         oauth:
+           scope: "ejabberd:admin"
+           access:
+             allow:
+               user: admin@localhost
+       what:
+         - "register"
+         - "change_password"
+   
    # Tokens are valid for a year as default:
    oauth_expire: 31536000
    oauth_access: all
@@ -112,10 +119,10 @@ the user will be allowed to call.
 3. You can also try to call any availale command thanks to the generic `call` command. Do not forget `-a` parameter for commands that requires admin rights. For example:
 
    ```bash
-   cat unregister.json 
-   {"user":"test1", "host":"localhost"}
+   cat register.json
+   {"user":"test1", "host":"localhost", "password":"somePassW0rd"}
    
-   ejabberd call --name unregister -a --data-file=unregister.json
+   ejabberd call --name register -a --data-file=register.json
    ```
 
 ### Generating Bash/ZSH completion
@@ -149,6 +156,12 @@ eval "$(ejabberd --completion-script-zsh)"
 
 * **token**: Get OAuth token. This is needed before calling others commands.
 * **stats**: Retrieve some stats from ejabberd.
+
+To get a full list of commands and their options:
+
+```bash
+ejabberd --help-long
+```
 
 ### OAuth Token file format
 
