@@ -21,15 +21,9 @@ If you have go installed in your environment you can install
 `ejabberd` command-line tool with:
 
 ```bash
-go get -v github.com/processone/ejabberd-api/cmd/ejabberd
+go install -v github.com/processone/ejabberd-api/cmd/ejabberd@master
 ```
-Once the get completes, you should find your new ejabberd (or ejabberd.exe) executable sitting inside $GOPATH/bin/.
-
-To update ejabberd API’s dependencies, use go get with the -u option.
-
-```bash
-go get -v -u github.com/processone/ejabberd-api/cmd/ejabberd
-```
+Once the get completes, you should find your new `ejabberd` (or `ejabberd.exe`) executable sitting inside `$GOPATH/bin/`.
 
 ## Configuring ejabberd OAuth API
 
@@ -40,7 +34,7 @@ ejabberd with OAuth support enabled. This is is documented in
 Here are example entries to check / change in your ejabberd
 configuration file:
 
-1. Add a listener for OAuth and ReST API:
+1. Add a [listener](https://docs.ejabberd.im/admin/configuration/listen/) for OAuth and ReST API:
 
    ```yaml
    listen:
@@ -49,17 +43,17 @@ configuration file:
        # differently than BOSH and Websocket HTTP interface.
        port: 5281
        # oauth and API only listen on localhost interface for security reason
-       # You can set ip to "0.0.0.0" to open it widely, but be careful!
-       ip: "127.0.0.1"
+       # You can set ip to 0.0.0.0 to open it widely, but be careful!
+       ip: 127.0.0.1
        module: ejabberd_http
        request_handlers:
-         "/oauth": ejabberd_oauth
-         "/api": mod_http_api
+         /oauth: ejabberd_oauth
+         /api: mod_http_api
    ```
 
 2. You can then configure the OAuth commands you want to expose. Check
-   `api_permissions` to make sure ACL for passing commands as
-   admins are set properly:
+   [`api_permissions`](https://docs.ejabberd.im/developer/ejabberd-api/permissions/)
+   to make sure ACL for passing commands as admins are set properly:
 
    ```yaml
    api_permissions:
@@ -79,8 +73,8 @@ configuration file:
    oauth_access: all
    ```
 
-3. Finally, make sure the modules, you need to use the command from
-   are enabled, for example:
+3. Finally, make sure to enable the modules that provide the commands you
+   want to use, for example:
 
    ```yaml
    modules:
@@ -89,15 +83,15 @@ configuration file:
 
 ## ejabberd command-line tool
 
-ejabberd command-line tool allow interacting ejabberd with ejabberd
-ReST API. It relies on OAuth tokens and scope to define the command
+The `ejabberd` command-line tool allows you to interact with your ejabberd server
+by using ejabberd's ReST API. It relies on OAuth tokens and scope to define the command
 the user will be allowed to call.
 
 ### Usage
 
 1. Generating an OAuth token:
 
-   To use ejabberd command-line tool, you first need to generate an OAuth
+   To use the `ejabberd` command-line tool, you first need to generate an OAuth
    token.
 
    It can be done, for example, with the following command:
@@ -116,7 +110,7 @@ the user will be allowed to call.
    ejabberd stats registeredusers
    ```
 
-3. You can also try to call any availale command thanks to the generic `call` command. Do not forget `-a` parameter for commands that requires admin rights. For example:
+3. You can also try to call any available command thanks to the generic `call` command. Do not forget `-a` parameter for commands that requires admin rights. For example:
 
    ```bash
    cat register.json
