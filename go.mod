@@ -1,4 +1,4 @@
-module ejabberd-api
+module github.com/processone/ejabberd-api
 
 go 1.21.3
 
