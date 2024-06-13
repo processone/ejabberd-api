@@ -15,8 +15,8 @@ Configuring ejabberd OAuth API
 
 Before being able to interact with ejabberd API, you need to configure
 ejabberd with OAuth support enabled. This is is documented in ejabberd
-OAuth support documentation
-(https://docs.ejabberd.im/admin/guide/oauth/).
+OAuth support documentation:
+https://docs.ejabberd.im/developer/ejabberd-api/oauth/
 
 Here are example entries to check / change in your ejabberd
 configuration file:
