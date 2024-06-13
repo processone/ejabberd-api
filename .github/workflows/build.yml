@@ -24,7 +24,7 @@ jobs:
         run: go build -v .
 
       - name: Install
-        run: go install -v github.com/processone/ejabberd-api/cmd/ejabberd@master
+        run: go install -v github.com/processone/ejabberd-api/cmd/ejabberd@${{ github.sha }}
 
       - name: Run goreleaser in release mode
         if: success() && startsWith(github.ref, 'refs/tags/v')
