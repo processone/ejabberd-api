@@ -1,6 +1,6 @@
 module github.com/processone/ejabberd-api
 
-go 1.21.3
+go 1.21
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.3.2
