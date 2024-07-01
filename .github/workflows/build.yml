@@ -28,7 +28,7 @@ jobs:
 
       - name: Run goreleaser in release mode
         if: success() && startsWith(github.ref, 'refs/tags/v')
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
           args: release --rm-dist
